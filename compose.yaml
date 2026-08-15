@@ -1,4 +1,37 @@
 services:
+  authorization_server:
+    # TODO what image?
+    image: ''
+    container_name:
+      'authorization_server'
+    env_file:
+      './authorization_server/.env'
+    ports:
+    # TODO what port?
+      - "${AUTHORIZATION_SERVER_PORT}:???"
+
+  client:
+    # TODO what image?
+    image: ''
+    container_name:
+      'client'
+    env_file:
+      './client/.env'
+    ports:
+    # TODO what port?
+      - "${CLIENT_PORT}:???"
+
+  protected_resource:
+    # TODO what image?
+    image: ''
+    container_name:
+      'protected_resource'
+    env_file:
+      './protected_resource/.env'
+    ports:
+    # TODO what port?
+      - "${PROTECTED_RESOURCE_PORT}:???"
+
   postgres:
     image: 'postgres:latest'
     environment:
@@ -7,4 +40,3 @@ services:
       - 'POSTGRES_USER=myuser'
     ports:
       - '5432'
-
