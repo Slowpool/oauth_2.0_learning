@@ -11,7 +11,6 @@
 	<groupId>com.swetlokognatsk</groupId>
 	<artifactId>protected_resource</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
 	<name>protected_resource</name>
 	<description/>
 	<url/>
