@@ -4,11 +4,10 @@ services:
       'authorization_server'
     build:
       context: '../authorization_server'
-      dockerfile: './.docker/dev.Dockerfile'
+      dockerfile: './.docker/Dockerfile.dev'
     volumes:
-      # TODO why rw?
-      - '../authorization_server/target/classes:/app/BOOT-INF/classes:rw'
-      - '../authorization_server/target/lib:/app/BOOT-INF/lib:rw'
+      - '../authorization_server/target/classes:/app/BOOT-INF/classes:delegated'
+      - '../authorization_server/target/lib:/app/BOOT-INF/lib:delegated'
     env_file:
       '../authorization_server/.docker/.env'
     ports:
@@ -16,28 +15,36 @@ services:
       - "5005:5005"
     # TODO depends on postgres
 
-  # client:
-  #   # TODO what image?
-  #   image: ''
-  #   container_name:
-  #     'client'
-  #   env_file:
-  #     './client/.docker/.env'
-  #   ports:
-  #   # TODO what port?
-  #     - "${CLIENT_PORT}:8082"
+  client:
+    container_name:
+      'client'
+    build:
+      context: '../client'
+      dockerfile: './.docker/Dockerfile.dev'
+    volumes:
+      - '../client/target/classes:/app/BOOT-INF/classes:delegated'
+      - '../client/target/lib:/app/BOOT-INF/lib:delegated'
+    env_file:
+      '../client/.docker/.env'
+    ports:
+      - "${CLIENT_PORT}:8082"
+      - "5006:5006"
 
-  # protected_resource:
-  #   # TODO what image?
-  #   image: ''
-  #   container_name:
-  #     'protected_resource'
-  #   env_file:
-  #     './protected_resource/.docker/.env'
-  #   ports:
-  #   # TODO what port?
-  #     - "${PROTECTED_RESOURCE_PORT}:8083"
-  #   # depends on postgres
+  protected_resource:
+    container_name:
+      'protected_resource'
+    build:
+      context: '../protected_resource'
+      dockerfile: './.docker/Dockerfile.dev'
+    volumes:
+      - '../protected_resource/target/classes:/app/BOOT-INF/classes:delegated'
+      - '../protected_resource/target/lib:/app/BOOT-INF/lib:delegated'
+    env_file:
+      '../protected_resource/.docker/.env'
+    ports:
+      - "${PROTECTED_RESOURCE_PORT}:8083"
+      - "5007:5007"
+    # depends on postgres
 
   # postgres:
   #   image: 'postgres:18.6'

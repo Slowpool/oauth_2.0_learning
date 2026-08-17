@@ -1,0 +1,5 @@
+FROM eclipse-temurin:26-jre
+
+WORKDIR /app
+
+ENTRYPOINT ["java", "-cp", "/app/BOOT-INF/classes:/app/BOOT-INF/lib/*", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006", "-Dspring.profiles.active=dev", "com.swetlokognatsk.client.ClientApplication"]

@@ -4,12 +4,9 @@ FROM eclipse-temurin:26-jre
 
 WORKDIR /app
 
-# COPY pom.xml .
-# RUN mvn dependency:go-offline
-
 ENTRYPOINT ["java", "-cp", "/app/BOOT-INF/classes:/app/BOOT-INF/lib/*", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-Dspring.profiles.active=dev", "com.swetlokognatsk.authorization_server.AuthorizationServerApplication"]
 
-
+# TODO figure out how to use these other ways
 # # ############# MULTISTAGE_BUILD_V2 ####################################################
 # FROM eclipse-temurin:26-jre AS builder
 
