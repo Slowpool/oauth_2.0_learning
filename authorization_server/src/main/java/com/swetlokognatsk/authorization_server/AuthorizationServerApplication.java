@@ -16,7 +16,7 @@ public class AuthorizationServerApplication {
 
 	@RequestMapping("/")
 	public String home() {
-		return "Hello Docker Wordsadfsadfsadfd";
+		return "Hello Docker World dima";
 	}
 
 }

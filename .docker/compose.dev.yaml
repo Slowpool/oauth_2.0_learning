@@ -6,14 +6,14 @@ services:
       context: '../authorization_server'
       dockerfile: './.docker/dev.Dockerfile'
     volumes:
+      # TODO why rw?
       - '../authorization_server/target/classes:/app/BOOT-INF/classes:rw'
+      - '../authorization_server/target/lib:/app/BOOT-INF/lib:rw'
     env_file:
       '../authorization_server/.docker/.env'
     ports:
       - "${AUTHORIZATION_SERVER_PORT}:8081"
       - "5005:5005"
-    command: 
-      - "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dspring.profiles.active=dev -jar /app/app.jar"
     # TODO depends on postgres
 
   # client:

@@ -1,20 +1,58 @@
-FROM maven:3.9-eclipse-temurin-26 AS external_and_standard_libs
+# ############# BIND MOUNTING COMPILLED CLASSES ####################################################
+
+FROM eclipse-temurin:26-jre
 
 WORKDIR /app
 
-COPY pom.xml .
-RUN mvn dependency:go-offline
+# COPY pom.xml .
+# RUN mvn dependency:go-offline
 
-COPY src src
-RUN mvn -B package -DskipTests
+ENTRYPOINT ["java", "-cp", "/app/BOOT-INF/classes:/app/BOOT-INF/lib/*", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-Dspring.profiles.active=dev", "com.swetlokognatsk.authorization_server.AuthorizationServerApplication"]
 
-FROM eclipse-temurin:26
 
-WORKDIR /app
+# # ############# MULTISTAGE_BUILD_V2 ####################################################
+# FROM eclipse-temurin:26-jre AS builder
 
-COPY --from=external_and_standard_libs /app/target/*.jar app.jar
+# WORKDIR /builder
 
-ENTRYPOINT ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-Dspring.profiles.active=dev", "-jar", "/app/app.jar"]
+# ARG JAR_FILE=target/*.jar
+# COPY ${JAR_FILE} app.jar
+
+# RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
+
+# FROM eclipse-temurin:26-jre
+
+# WORKDIR /app
+
+# COPY --from=builder /builder/extracted/dependencies/ ./
+# COPY --from=builder /builder/extracted/spring-boot-loader/ ./
+# COPY --from=builder /builder/extracted/snapshot-dependencies/ ./
+# COPY --from=builder /builder/extracted/application/ ./
+
+# # ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+# # ENTRYPOINT ["java", "-Dspring.devtools.restart.enabled=true", "-Dloader.path=/app/BOOT-INF/classes", "-jar", "app.jar"]
+# ENTRYPOINT ["java", "-Dloader.path=/app/BOOT-INF/classes", "-jar", "app.jar"]
+
+# ############# MULTISTAGE_BUILD_V1 ####################################################
+# FROM maven:3.9-eclipse-temurin-26 AS external_and_standard_libs
+
+# WORKDIR /app
+
+# COPY pom.xml .
+# RUN mvn dependency:go-offline
+
+# COPY src src
+# RUN mvn -B package -DskipTests
+
+# FROM eclipse-temurin:26
+
+# WORKDIR /app
+
+# COPY --from=external_and_standard_libs /app/target/*.jar app.jar
+
+# # NOT FOUND BY SOME REASON!
+# # TODO whatis -Djava.security.egd=file:/dev/./urandom
+# ENTRYPOINT ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-Dspring.profiles.active=dev", "-Dloader.path=/app/BOOT-INF/classes", "-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.launch.JarLauncher"]
 
 
 # ########### SECOND OPTION
