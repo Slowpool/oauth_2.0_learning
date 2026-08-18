@@ -17,7 +17,7 @@ public class AuthorizationServerApplication {
 	@RequestMapping("/")
 	public String home() {
 		// TODO how to make debugging work
-		return "Hello AuthorizationServerApplication";
+		return "<h1>Hello AuthorizationServerApplication</h1>";
 	}
 
 }

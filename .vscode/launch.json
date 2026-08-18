@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "AuthorizationServerApplication",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "5015",
+            "projectName": "authorization_server"
+        },
+        {
+            "type": "java",
+            "name": "ClientApplication",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "5016",
+            "projectName": "client"
+        },
+        {
+            "type": "java",
+            "name": "ProtectedResourceApplication",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "5017",
+            "projectName": "protected_resource"
+        }
+    ]
+}

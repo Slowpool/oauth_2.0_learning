@@ -2,10 +2,11 @@ package com.swetlokognatsk.client;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @RestController
 public class ClientApplication {
 
@@ -15,7 +16,7 @@ public class ClientApplication {
 
 	@RequestMapping("/")
 	public String home() {
-		return "Hello ClientApplication";
+		return "<h1>Hello ClientApplication</h1>";
 	}
 
 }
