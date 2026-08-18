@@ -6,6 +6,7 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @RestController
 public class ProtectedResourceApplication {

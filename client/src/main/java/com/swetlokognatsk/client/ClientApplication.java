@@ -16,7 +16,13 @@ public class ClientApplication {
 
 	@RequestMapping("/")
 	public String home() {
-		return "<h1>Hello ClientApplication</h1>";
+		var content = "<h1>Hello ClientApplication</h1>" +
+			"<button type=\"button\" onclick=\"window.location.href='%s';\">" +
+						"Sign in via GipHub" +
+			"</button>";
+		var authEndpointURI = URIBuilder.buildAuthorizationURI();
+		content = String.format(content, authEndpointURI);
+		return content;
 	}
 
 }
