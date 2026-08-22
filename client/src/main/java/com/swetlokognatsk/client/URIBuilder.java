@@ -20,15 +20,21 @@ public class URIBuilder {
         return uri.encode().toUriString();
     }
 
-    public static String buildAuthorizationURI() {
+    public static String buildAuthorizationURI(final String state) {
         var baseUri = AuthorizationServer.getAuthorizationEndpoint();
+        
         var options = new HashMap<String, String>();
         options.put("response_type", "code");
         options.put("client_id", Client.getId());
+        // TODO why `Client.getRedirectURI` is empty?
         options.put("redirect_uri", Client.getRedirectURI());
+        options.put("state", state);
+        
         var authorizationUri = buildURI(baseUri, options, null);
         return authorizationUri;
     }
+
+    
 
     public static String buildProtectedResourceURI() {
         return "nope";
