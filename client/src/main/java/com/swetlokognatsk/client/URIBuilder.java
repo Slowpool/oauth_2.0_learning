@@ -27,11 +27,20 @@ public class URIBuilder {
         options.put("response_type", "code");
         options.put("client_id", Client.getId());
         // TODO why `Client.getRedirectURI` is empty?
-        options.put("redirect_uri", Client.getRedirectURI());
+        var encodedRedirectUri = getEncodedRedirectURI();
+        options.put("redirect_uri", encodedRedirectUri);
         options.put("state", state);
         
         var authorizationUri = buildURI(baseUri, options, null);
         return authorizationUri;
+    }
+
+    private static String getEncodedRedirectURI() {
+        var redirectUri = Client.getRedirectURI();
+        var uriBuilder = UriComponentsBuilder.fromUriString(redirectUri);
+        // TODO how to also encode :// // / characters to %05 or kinda?
+        uriBuilder.encode();
+        return uriBuilder.toUriString();
     }
 
     

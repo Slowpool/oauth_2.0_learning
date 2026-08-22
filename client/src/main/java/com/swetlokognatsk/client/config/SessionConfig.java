@@ -9,10 +9,10 @@ import org.springframework.session.config.annotation.web.http.EnableSpringHttpSe
 
 @EnableSpringHttpSession
 @Configuration
-public class SessionConfig {
+class SessionConfig {
 
     @Bean
-    public MapSessionRepository sessionRepository() {
+    MapSessionRepository sessionRepository() {
         return new MapSessionRepository(new ConcurrentHashMap<>());
     }
 }
