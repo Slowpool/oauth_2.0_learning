@@ -1,16 +1,11 @@
 package com.swetlokognatsk.client;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.UUID;
 import org.springframework.context.ApplicationContext;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -18,17 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
-import org.springframework.web.util.WebUtils;
 import org.thymeleaf.Thymeleaf;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.session.MapSession;
 import org.springframework.session.MapSessionRepository;
 import org.springframework.session.Session;
-import org.springframework.session.SessionRepository;
-import org.springframework.session.config.annotation.web.http.EnableSpringHttpSession;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @RestController
@@ -37,6 +28,13 @@ public class ClientApplication {
 	private static ApplicationContext ctx;
 	private static final String STATE = "state";
 	private static final String SESSION_COOKIE = "CUSTOM_SESSION";
+	private final Service service;
+	private final MapSessionRepository sessionRepository;
+
+	public ClientApplication(final Service service, final MapSessionRepository sessionRepository) {
+		this.service = service;
+		this.sessionRepository = sessionRepository;
+	}
 
 	public static void main(String[] args) {
 		ctx = SpringApplication.run(ClientApplication.class, args);
@@ -72,19 +70,15 @@ public class ClientApplication {
 	}
 
 	private String createStateAndWriteToSession(final HttpServletRequest request, final HttpServletResponse response) {
-		var session = createSession(request);
+		var session = createSession();
 
-		var state = generateState();
+		var state = service.generateState();
 		session.setAttribute(STATE, state);
 
 		saveSession(session);
 		var sessionCookie = new Cookie(SESSION_COOKIE, session.getId());
 		response.addCookie(sessionCookie);
 		return state;
-	}
-
-	private static String generateState() {
-		return UUID.randomUUID().toString();
 	}
 
 	@RequestMapping("/callback")
@@ -110,8 +104,7 @@ public class ClientApplication {
 		}
 	}
 
-	private Session createSession(final HttpServletRequest request) {
-		var sessionRepository = getSessionRepository();
+	private Session createSession() {
 		var session = sessionRepository.createSession();
 		return session;
 	}
@@ -120,18 +113,12 @@ public class ClientApplication {
 		if (sessionId == null) {
 			throw new IllegalArgumentException("session not found");
 		} else {
-			var sessionRepository = getSessionRepository();
 			return sessionRepository.findById(sessionId);
 		}
 	}
 
 	private void saveSession(final Session session) {
-		var sessionRepository = getSessionRepository();
-		sessionRepository.save((MapSession)session);
-	}
-
-	private SessionRepository<MapSession> getSessionRepository() {
-		return (SessionRepository<MapSession>) ctx.getBean(MapSessionRepository.class);
+		sessionRepository.save((MapSession) session);
 	}
 
 }

@@ -2,48 +2,55 @@ package com.swetlokognatsk.client;
 
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 public class URIBuilder {
 
-    private static String buildURI(String base, Map<String, String> options, String hash) {
+    private static String buildURI(final String base, final Map<String, String> options, final String hash, final boolean encode) {
         var uri = UriComponentsBuilder.fromUriString(base);
         uri.replaceQuery("");
         for (var option : options.keySet()) {
             uri.queryParam(option, options.get(option));
         }
+
         if (hash != null) {
             uri.fragment(hash);
         }
-        return uri.encode().toUriString();
+
+        if (encode) {
+            uri.encode();
+        }
+
+        return uri.toUriString();
     }
 
     public static String buildAuthorizationURI(final String state) {
         var baseUri = AuthorizationServer.getAuthorizationEndpoint();
-        
+
         var options = new HashMap<String, String>();
         options.put("response_type", "code");
         options.put("client_id", Client.getId());
-        // TODO why `Client.getRedirectURI` is empty?
-        var encodedRedirectUri = getEncodedRedirectURI();
+        var encodedRedirectUri = getClientRedirectURI(true);
         options.put("redirect_uri", encodedRedirectUri);
         options.put("state", state);
-        
-        var authorizationUri = buildURI(baseUri, options, null);
+
+        var authorizationUri = buildURI(baseUri, options, null, false);
         return authorizationUri;
     }
 
-    private static String getEncodedRedirectURI() {
+    private static String getClientRedirectURI(final boolean encode) {
         var redirectUri = Client.getRedirectURI();
         var uriBuilder = UriComponentsBuilder.fromUriString(redirectUri);
-        // TODO how to also encode :// // / characters to %05 or kinda?
-        uriBuilder.encode();
-        return uriBuilder.toUriString();
-    }
+        // TODO that's it or some query params should be added to that uri?
 
-    
+        var decodedUri = uriBuilder.toUriString();
+        var uri = encode ? UriUtils.encode(decodedUri, StandardCharsets.UTF_8) : decodedUri;
+        return uri;
+    }
 
     public static String buildProtectedResourceURI() {
         return "nope";
