@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public final class Service implements ApplicationContextAware {
+public class Service implements ApplicationContextAware {
 
     private ApplicationContext ctx;
     
@@ -17,7 +17,6 @@ public final class Service implements ApplicationContextAware {
         this.ctx = applicationContext;
     }
 
-    
     @Bean
     Service getService() {
         return new Service();

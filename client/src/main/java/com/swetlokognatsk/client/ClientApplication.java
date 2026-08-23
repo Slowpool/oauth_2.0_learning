@@ -3,6 +3,7 @@ package com.swetlokognatsk.client;
 import java.io.IOException;
 import org.springframework.context.ApplicationContext;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
@@ -31,7 +32,7 @@ public class ClientApplication {
 	private final Service service;
 	private final MapSessionRepository sessionRepository;
 
-	public ClientApplication(final Service service, final MapSessionRepository sessionRepository) {
+	public ClientApplication(@Autowired final Service service, @Autowired final MapSessionRepository sessionRepository) {
 		this.service = service;
 		this.sessionRepository = sessionRepository;
 	}
