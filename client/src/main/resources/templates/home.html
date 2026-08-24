@@ -1,12 +1,25 @@
 <h1>Hello ClientApplication</h1>
-<h1 th:text="|access token value: ${token}|"></span></h1>
-<h1 th:text="|state: ${state}|"></h1>
-<h1 th:text="|scope: ${scope}|"></h1>
-<h1></h1>
-<button type="button" th:attr="onclick=|window.location.href='${getAuthEndpointUri}';|">
-    <h1>Sign in via GipHub</h1>
-</button>
-.............
-<button type="button" th:attr="onclick=|window.location.href='${askForProtectedResourceUri}';|">
-    <h1>Get protected resource</h1>
-</button>
+<div>
+    <button type="button" th:attr="onclick=|window.location.href='${useAccessTokenStrategyUri}';|">
+        <h1>Use AccessToken strategy</h1>
+    </button>
+    .............
+    <button type="button" th:attr="onclick=|window.location.href='${useRefreshAndAccessTokensPairStrategyUri}';|">
+        <h1>Use RefreshAndAccessTokensPair strategy</h1>
+    </button>
+</div>
+<div>
+    <h1 th:text="|access token value: ${token}|"></h1>
+    <h1 th:text="|state: ${state}|"></h1>
+    <h1 th:text="|scope: ${scope}|"></h1>
+    <h1 th:text="|tokenStrategy: ${tokenStrategy}|"></h1>
+</div>
+<div>
+    <button type="button" th:attr="onclick=|window.location.href='${getAuthEndpointUri}';|">
+        <h1>Sign in via GipHub</h1>
+    </button>
+    .............
+    <button type="button" th:attr="onclick=|window.location.href='${askForProtectedResourceUri}';|">
+        <h1>Get protected resource</h1>
+    </button>
+</div>

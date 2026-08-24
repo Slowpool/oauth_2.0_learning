@@ -2,7 +2,6 @@ package com.swetlokognatsk.client;
 
 import java.io.IOException;
 import java.util.Map;
-
 import org.springframework.context.ApplicationContext;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 import org.thymeleaf.Thymeleaf;
@@ -43,6 +42,12 @@ import static com.swetlokognatsk.client.model.TokenStrategy.*;
 @Controller
 public class ClientApplication {
 
+	private static final String HOME = "/";
+
+	private static final String USE_NEW_TOKEN_STRATEGY = "/use-token-strategy";
+	private static final String USE_ACCESS_TOKEN_STRATEGY = USE_NEW_TOKEN_STRATEGY + "/" + SINGLE_ACCESS_TOKEN;
+	private static final String USE_REFRESH_AND_ACCESS_TOKENS_PAIR_STRATEGY = USE_NEW_TOKEN_STRATEGY + "/" + REFRESH_AND_ACCESS_PAIR;
+
 	private static final String SING_IN_VIA_GIP_HUB_PATH = "/sing-in-via-gip-hub";
 	private static final String FETCH_PROTECTED_RESOURCE_PATH = "/fetch-protected-resource";
 
@@ -66,9 +71,14 @@ public class ClientApplication {
 		this.sessionRepository = sessionRepository;
 	}
 
-	@GetMapping("/")
+	@GetMapping(HOME)
 	public ModelAndView home(final Model model, @CookieValue(SESSION_COOKIE) String sessionId, final HttpServletResponse response) {
 		sessionId = ensureSessionExists(sessionId, response);
+
+		model.addAttribute("useAccessTokenStrategyUri", USE_ACCESS_TOKEN_STRATEGY);
+		model.addAttribute("useRefreshAndAccessTokensPairStrategyUri", USE_REFRESH_AND_ACCESS_TOKENS_PAIR_STRATEGY);
+
+		model.addAttribute("tokenStrategy", getTokenStrategy(sessionId));
 
 		String state = getState(sessionId);
 		model.addAttribute("state", state);
@@ -79,10 +89,18 @@ public class ClientApplication {
 		model.addAttribute("scope", null);
 
 		model.addAttribute("getAuthEndpointUri", SING_IN_VIA_GIP_HUB_PATH);
-
 		model.addAttribute("askForProtectedResourceUri", FETCH_PROTECTED_RESOURCE_PATH);
 
 		return new ModelAndView("home", model.asMap());
+	}
+
+	@GetMapping(USE_NEW_TOKEN_STRATEGY + "/{newStrategy}")
+	// TODO does it work with enum???
+	public RedirectView useStrategy(@CookieValue(SESSION_COOKIE) final String sessionId, @PathVariable final TokenStrategy newStrategy) {
+		setTokenStrategy(sessionId, newStrategy);
+
+		// TODO is there something more suitable than redirectVIEW??? what is it at all?
+		return new RedirectView(HOME);
 	}
 
 	@GetMapping(SING_IN_VIA_GIP_HUB_PATH)
@@ -219,8 +237,8 @@ public class ClientApplication {
 		}
 
 		session = sessionRepository.createSession();
-		setTokenStrategy(session, SINGLE_ACCESS_TOKEN);
 		saveSession(session);
+		setTokenStrategy(session.getId(), SINGLE_ACCESS_TOKEN);
 
 		var newSessionCookie = new Cookie(SESSION_COOKIE, session.getId());
 		response.addCookie(newSessionCookie);
@@ -233,8 +251,10 @@ public class ClientApplication {
 		return session.getAttribute(TOKEN_STRATEGY);
 	}
 
-	private void setTokenStrategy(final Session session, final TokenStrategy tokenStrategy) {
+	private void setTokenStrategy(final String sessionId, final TokenStrategy tokenStrategy) {
+		var session = getSession(sessionId);
 		session.setAttribute(TOKEN_STRATEGY, tokenStrategy);
+		saveSession(session);
 	}
 
 	private String createStateAndWriteToSession(final String sessionId) {
