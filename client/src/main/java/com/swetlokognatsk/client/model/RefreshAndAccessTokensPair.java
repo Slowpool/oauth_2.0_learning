@@ -9,4 +9,8 @@ public final class RefreshAndAccessTokensPair extends Token {
         this.refreshToken = refreshToken;
         this.accessToken = accessToken;
     }
+
+    public String toString() {
+        return "refreshToken: %s </br> accessToken: %s".formatted(refreshToken, accessToken);
+    }
 }

@@ -13,4 +13,8 @@ public final class AccessToken extends Token implements Serializable {
         this.type = type;
     }
 
+    public String toString() {
+        return value;
+    }
+
 }
