@@ -15,12 +15,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 import org.thymeleaf.Thymeleaf;
+import com.swetlokognatsk.client.infrastructure.Database;
+import com.swetlokognatsk.client.model.AccessToken;
+import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
+import com.swetlokognatsk.client.model.RefreshToken;
+import com.swetlokognatsk.client.model.Token;
+import com.swetlokognatsk.client.model.TokenStrategy;
+import com.swetlokognatsk.client.services.AppHttpClient;
+import com.swetlokognatsk.client.services.Service;
+import com.swetlokognatsk.client.services.TokenParser;
+import com.swetlokognatsk.client.services.URIBuilder;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.session.MapSession;
 import org.springframework.session.MapSessionRepository;
 import org.springframework.session.Session;
+import org.springframework.ui.Model;
+import static com.swetlokognatsk.client.model.TokenStrategy.*;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @RestController
@@ -30,121 +42,42 @@ public class ClientApplication {
 	private static final String SING_IN_VIA_GIP_HUB_PATH = "/sing-in-via-gip-hub";
 
 	private static ApplicationContext ctx;
-	private static final String STATE = "state";
 	private static final String SESSION_COOKIE = "CUSTOM_SESSION";
+
+	private static final String STATE = "state";
 	private static final String TOKEN = "token";
+
+	private static final String TOKEN_STRATEGY = "TOKEN_STRATEGY";
 
 	private final Service service;
 	private final MapSessionRepository sessionRepository;
+
+	public static void main(String[] args) {
+		ctx = SpringApplication.run(ClientApplication.class, args);
+	}
 
 	public ClientApplication(final Service service, final MapSessionRepository sessionRepository) {
 		this.service = service;
 		this.sessionRepository = sessionRepository;
 	}
 
-	public static void main(String[] args) {
-		ctx = SpringApplication.run(ClientApplication.class, args);
-	}
-
-	private Session getSession(final String sessionId) {
-		if (sessionId == null) {
-			throw new IllegalArgumentException("session not found");
-		} else {
-			return sessionRepository.findById(sessionId);
-		}
-	}
-
-	private String getState(final String sessionCookie) {
-		var session = getSession(sessionCookie);
-		if (session == null) {
-			return null;
-		}
-		var sessionState = (String) session.getAttribute(STATE);
-		return sessionState;
-	}
-
-	private Token getToken(final String sessionCookie) {
-		var session = getSession(sessionCookie);
-		if (session == null) {
-			return null;
-		}
-		var token = (Token) session.getAttribute(TOKEN);
-		return token;
-	}
-
-	private void saveToken(final String sessionId, final Token token) {
-		var session = getSession(sessionId);
-		session.setAttribute(TOKEN, token);
-		saveSession(session);
-	}
-
-	private void removeState(final String sessionCookie) {
-		var session = getSession(sessionCookie);
-		if (session == null) {
-			return;
-		}
-		session.removeAttribute(STATE);
-		saveSession(session);
-	}
-
-	private void saveSession(final Session session) {
-		sessionRepository.save((MapSession) session);
-	}
-
-	private void createSessionIfDoesNotExist(@CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
-		var session = getSession(sessionCookie);
-		if (session != null) {
-			return;
-		}
-
-		session = sessionRepository.createSession();
-		saveSession(session);
-
-		var newSessionCookie = new Cookie(SESSION_COOKIE, session.getId());
-		response.addCookie(newSessionCookie);
-	}
-
-	private String createStateAndWriteToSession(final String sessionCookie) {
-		var session = getSession(sessionCookie);
-
-		var state = service.generateState();
-		session.setAttribute(STATE, state);
-
-		saveSession(session);
-		return state;
-	}
-
 	@RequestMapping("/")
-	public String home(@CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
-		// TODO use thymeleaf
-		var content = """
-				<h1>Hello ClientApplication</h1>
+	public String home(final Model model, @CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
+		ensureSessionExists(sessionCookie, response);
 
-				<h1>access token value: %s</h1>
-				<h1>scope value: %s</h1>
-				<h1>state: %s</h1>
-				<h1></h1>
-
-				<button type="button" onclick="window.location.href='%s';">
-					<h1>Sign in via GipHub</h1>
-					</button>
-					.............
-					<button type="button" onclick="window.open('%s');">
-					<h1>Get protected resource</h1>
-				</button>
-				""";
+		String state = getState(sessionCookie);
+		model.addAttribute("state", state);
 
 		Token token = getToken(sessionCookie);
-		String state = getState(sessionCookie);
-		String accessToken = token == null ? "" : token.value();
-		String scope = null;
-		var getAuthEndpointURI = SING_IN_VIA_GIP_HUB_PATH;
-		var askForProtectedResourceUri = FETCH_PROTECTED_RESOURCE_PATH;
-		content = content.formatted(accessToken, scope, state, getAuthEndpointURI, askForProtectedResourceUri);
+		model.addAttribute("token", token);
 
-		createSessionIfDoesNotExist(sessionCookie, response);
+		model.addAttribute("scope", null);
 
-		return content;
+		model.addAttribute("getAuthEndpointURI", SING_IN_VIA_GIP_HUB_PATH);
+
+		model.addAttribute("askForProtectedResourceUri", FETCH_PROTECTED_RESOURCE_PATH);
+
+		return "home";
 	}
 
 	@RequestMapping(SING_IN_VIA_GIP_HUB_PATH)
@@ -166,9 +99,20 @@ public class ClientApplication {
 		}
 
 		try {
+			var tokenStrategy = getTokenStrategy(sessionCookie);
 			var rawJsonToken = AppHttpClient.sendTokenRequest(code);
-			var token = TokenParser.parse(rawJsonToken);
-			saveToken(sessionCookie, token);
+			Token token = TokenParser.parse(rawJsonToken, tokenStrategy);
+			switch (token) {
+			case AccessToken accessToken:
+				saveAccessToken(sessionCookie, accessToken);
+				break;
+			case RefreshAndAccessTokensPair refreshAndAccessTokens:
+				saveAccessToken(sessionCookie, refreshAndAccessTokens.accessToken);
+				saveRefreshToken(refreshAndAccessTokens.refreshToken);
+				break;
+			default:
+				throw new RuntimeException("unknown token: " + token);
+			}
 			return ResponseEntity.ok("token received: %s".formatted(rawJsonToken));
 		} catch (IOException | InterruptedException e) {
 			var logger = LogFactory.getLog(getClass());
@@ -181,20 +125,116 @@ public class ClientApplication {
 
 	@RequestMapping(FETCH_PROTECTED_RESOURCE_PATH)
 	public ResponseEntity<?> fetchProtectedResource(@CookieValue(SESSION_COOKIE) final String sessionCookie) {
-		var token = getToken(sessionCookie);
+		var accessToken = getAccessToken(sessionCookie);
 
-		if (token == null) {
+		if (accessToken == null) {
 			return ResponseEntity.badRequest().body("access token is not found in session");
 		}
 
 		try {
-			var resource = AppHttpClient.fetchProtectedResource(token);
+			var resource = AppHttpClient.fetchProtectedResource(accessToken);
 			var message = "successfully fetched: %s".formatted(resource);
 			return ResponseEntity.ok().body(message);
 		} catch (IOException | InterruptedException e) {
 			var message = "failed! authorize: <a href=\"%s\">sign in via gip hub</a> message: %s".formatted(SING_IN_VIA_GIP_HUB_PATH, e.getMessage());
 			return ResponseEntity.internalServerError().body(message);
 		}
+	}
+
+	private Session getSession(final String sessionId) {
+		if (sessionId == null) {
+			throw new IllegalArgumentException("session not found");
+		} else {
+			return sessionRepository.findById(sessionId);
+		}
+	}
+
+	private String getState(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+		if (session == null) {
+			return null;
+		}
+		var sessionState = (String) session.getAttribute(STATE);
+		return sessionState;
+	}
+
+	private RefreshToken getRefreshToken() {
+		return Database.getRefreshToken();
+	}
+
+	private void saveRefreshToken(final RefreshToken refreshToken) {
+		Database.saveRefreshToken(refreshToken);
+	}
+
+	private AccessToken getAccessToken(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+		if (session == null) {
+			return null;
+		}
+		var accessToken = (AccessToken) session.getAttribute(TOKEN);
+		return accessToken;
+	}
+
+	private void saveAccessToken(final String sessionId, final AccessToken accessToken) {
+		var session = getSession(sessionId);
+		session.setAttribute(TOKEN, accessToken);
+		saveSession(session);
+	}
+
+	private Token getToken(final String sessionCookie) {
+		var tokenStrategy = getTokenStrategy(sessionCookie);
+		var token = switch (tokenStrategy) {
+		case SINGLE_ACCESS_TOKEN -> getAccessToken(sessionCookie);
+		case REFRESH_AND_ACCESS_PAIR -> new RefreshAndAccessTokensPair(getRefreshToken(), getAccessToken(sessionCookie));
+		default -> throw new RuntimeException("unknown token strategy: " + tokenStrategy);
+		};
+		return token;
+	}
+
+	private void removeState(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+		if (session == null) {
+			return;
+		}
+		session.removeAttribute(STATE);
+		saveSession(session);
+	}
+
+	private void saveSession(final Session session) {
+		sessionRepository.save((MapSession) session);
+	}
+
+	private void ensureSessionExists(@CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
+		var session = getSession(sessionCookie);
+		if (session != null) {
+			return;
+		}
+
+		session = sessionRepository.createSession();
+		setTokenStrategy(session, SINGLE_ACCESS_TOKEN);
+		saveSession(session);
+
+		var newSessionCookie = new Cookie(SESSION_COOKIE, session.getId());
+		response.addCookie(newSessionCookie);
+	}
+
+	private TokenStrategy getTokenStrategy(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+		return session.getAttribute(TOKEN_STRATEGY);
+	}
+
+	private void setTokenStrategy(final Session session, final TokenStrategy tokenStrategy) {
+		session.setAttribute(TOKEN_STRATEGY, tokenStrategy);
+	}
+
+	private String createStateAndWriteToSession(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+
+		var state = service.generateState();
+		session.setAttribute(STATE, state);
+
+		saveSession(session);
+		return state;
 	}
 
 }

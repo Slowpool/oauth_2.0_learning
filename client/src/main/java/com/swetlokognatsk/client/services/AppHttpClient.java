@@ -1,4 +1,4 @@
-package com.swetlokognatsk.client;
+package com.swetlokognatsk.client.services;
 
 import java.io.IOException;
 import java.net.Authenticator;
@@ -16,8 +16,47 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.swetlokognatsk.client.Client;
+import com.swetlokognatsk.client.external_services.AuthorizationServer;
+import com.swetlokognatsk.client.external_services.ProtectedResource;
+import com.swetlokognatsk.client.model.AccessToken;
+import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
+import com.swetlokognatsk.client.model.Token;
 
 public final class AppHttpClient {
+
+    private static HttpResponse<?> sendHttpRequest(final String method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
+        // TODO use headers
+        var bodyContent = mapBodyToString(body);
+
+        var bodyPublisher = BodyPublishers.ofString(bodyContent);
+        var request = HttpRequest.newBuilder(URI.create(uri)).POST(bodyPublisher).build();
+
+        var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
+        var response = client.send(request, BodyHandlers.ofString());
+        return response;
+    }
+
+    private static String mapBodyToString(final Map<String, String> body) {
+        if (body.size() == 0) {
+            return "";
+        }
+
+        var bodyCopy = Map.copyOf(body);
+        var uriBuilder = UriComponentsBuilder.newInstance();
+        bodyCopy.forEach(uriBuilder::queryParam);
+
+        var urlEncodedBody = uriBuilder.build().encode().toUriString()
+                // "?key1=val1,key2=val2" => "key1=val1,key2=val2"
+                .substring(1);
+        return urlEncodedBody;
+    }
+
+    private static String encodeClientCredentials(final String clientId, final String clientSecret) {
+        var contatenatedCredentials = "%s:%s".formatted(clientId, clientSecret);
+        var encodedCredentials = Base64.getEncoder().encodeToString(contatenatedCredentials.getBytes());
+        return encodedCredentials;
+    }
 
     public static String sendTokenRequest(final String code) throws IOException, InterruptedException {
         var uri = AuthorizationServer.getTokenEndpoint();
@@ -49,44 +88,16 @@ public final class AppHttpClient {
         // }
     }
 
-    private static String encodeClientCredentials(final String clientId, final String clientSecret) {
-        var contatenatedCredentials = "%s:%s".formatted(clientId, clientSecret);
-        var encodedCredentials = Base64.getEncoder().encodeToString(contatenatedCredentials.getBytes());
-        return encodedCredentials;
+    public static String sendTokenRefreshingRequest(final RefreshAndAccessTokensPair refreshToken) throws IOException, InterruptedException {
+        // TODO sendTokenRefreshingRequest
+        return "latch";
     }
 
-    private static HttpResponse<?> sendHttpRequest(final String method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
-        // TODO use headers
-        var bodyContent = mapBodyToString(body);
-
-        var bodyPublisher = BodyPublishers.ofString(bodyContent);
-        var request = HttpRequest.newBuilder(URI.create(uri)).POST(bodyPublisher).build();
-
-        var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
-        var response = client.send(request, BodyHandlers.ofString());
-        return response;
-    }
-
-    private static String mapBodyToString(final Map<String, String> body) {
-        if (body.size() == 0) {
-            return "";
-        }
-
-        var bodyCopy = Map.copyOf(body);
-        var uriBuilder = UriComponentsBuilder.newInstance();
-        bodyCopy.forEach(uriBuilder::queryParam);
-
-        var urlEncodedBody = uriBuilder.build().encode().toUriString()
-                // "?key1=val1,key2=val2" => "key1=val1,key2=val2"
-                .substring(1);
-        return urlEncodedBody;
-    }
-
-    public static String fetchProtectedResource(final Token token) throws IOException, InterruptedException {
+    public static String fetchProtectedResource(final AccessToken token) throws IOException, InterruptedException {
         var uri = ProtectedResource.getFetchResourceEndpoint();
 
         var headers = new HashMap<String, String>();
-        var credentials = "Bearer %s".formatted(token.value());
+        var credentials = "Bearer %s".formatted(token.value);
         headers.put("Authorization", credentials);
 
         var result = sendHttpRequest("POST", uri, headers, new HashMap<>());

@@ -1,4 +1,4 @@
-package com.swetlokognatsk.client;
+package com.swetlokognatsk.client.services;
 
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
+
+import com.swetlokognatsk.client.Client;
+import com.swetlokognatsk.client.external_services.AuthorizationServer;
 
 public class URIBuilder {
 

@@ -1,4 +1,4 @@
-package com.swetlokognatsk.client;
+package com.swetlokognatsk.client.external_services;
 
 public final class AuthorizationServer {
 

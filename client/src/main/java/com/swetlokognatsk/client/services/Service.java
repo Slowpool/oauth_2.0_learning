@@ -1,4 +1,4 @@
-package com.swetlokognatsk.client;
+package com.swetlokognatsk.client.services;
 
 import java.util.UUID;
 
