@@ -46,6 +46,14 @@ public class ClientApplication {
 		ctx = SpringApplication.run(ClientApplication.class, args);
 	}
 
+	private Session getSession(final String sessionId) {
+		if (sessionId == null) {
+			throw new IllegalArgumentException("session not found");
+		} else {
+			return sessionRepository.findById(sessionId);
+		}
+	}
+
 	private String getState(final String sessionCookie) {
 		var session = getSession(sessionCookie);
 		if (session == null) {
@@ -64,17 +72,50 @@ public class ClientApplication {
 		return token;
 	}
 
-	private void flushStateFromSession(final String sessionCookie) {
+	private void saveToken(final String sessionId, final Token token) {
+		var session = getSession(sessionId);
+		session.setAttribute(TOKEN, token);
+		saveSession(session);
+	}
+
+	private void removeState(final String sessionCookie) {
 		var session = getSession(sessionCookie);
 		if (session == null) {
 			return;
 		}
 		session.removeAttribute(STATE);
+		saveSession(session);
+	}
+
+	private void saveSession(final Session session) {
 		sessionRepository.save((MapSession) session);
 	}
 
+	private void createSessionIfDoesNotExist(@CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
+		var session = getSession(sessionCookie);
+		if (session != null) {
+			return;
+		}
+
+		session = sessionRepository.createSession();
+		saveSession(session);
+
+		var newSessionCookie = new Cookie(SESSION_COOKIE, session.getId());
+		response.addCookie(newSessionCookie);
+	}
+
+	private String createStateAndWriteToSession(final String sessionCookie) {
+		var session = getSession(sessionCookie);
+
+		var state = service.generateState();
+		session.setAttribute(STATE, state);
+
+		saveSession(session);
+		return state;
+	}
+
 	@RequestMapping("/")
-	public String home(@CookieValue(SESSION_COOKIE) final String sessionCookie) {
+	public String home(@CookieValue(SESSION_COOKIE) final String sessionCookie, final HttpServletResponse response) {
 		// TODO use thymeleaf
 		var content = """
 				<h1>Hello ClientApplication</h1>
@@ -101,35 +142,25 @@ public class ClientApplication {
 		var askForProtectedResourceUri = FETCH_PROTECTED_RESOURCE_PATH;
 		content = content.formatted(accessToken, scope, state, getAuthEndpointURI, askForProtectedResourceUri);
 
+		createSessionIfDoesNotExist(sessionCookie, response);
+
 		return content;
 	}
 
 	@RequestMapping(SING_IN_VIA_GIP_HUB_PATH)
-	public RedirectView singInViaGipHub(final HttpServletRequest request, final HttpServletResponse response) {
-		var state = createStateAndWriteToSession(request, response);
+	public RedirectView singInViaGipHub(@CookieValue(SESSION_COOKIE) final String sessionCookie) {
+		var state = createStateAndWriteToSession(sessionCookie);
 
 		var authEndpointURI = URIBuilder.buildAuthorizationURI(state);
 		var redirect = new RedirectView(authEndpointURI);
 		return redirect;
 	}
 
-	private String createStateAndWriteToSession(final HttpServletRequest request, final HttpServletResponse response) {
-		var session = createSession();
-
-		var state = service.generateState();
-		session.setAttribute(STATE, state);
-
-		saveSession(session);
-		var sessionCookie = new Cookie(SESSION_COOKIE, session.getId());
-		response.addCookie(sessionCookie);
-		return state;
-	}
-
 	@RequestMapping("/callback")
 	public ResponseEntity<?> callback(@RequestParam final String code, @RequestParam final String state, @CookieValue(SESSION_COOKIE) final String sessionCookie, HttpServletRequest request) {
 		var sessionState = getState(sessionCookie);
 		if (state.equals(sessionState)) {
-			flushStateFromSession(sessionCookie);
+			removeState(sessionCookie);
 		} else {
 			return ResponseEntity.badRequest().body("state does not correspond. expected state: '%s', received state: '%s'".formatted(sessionState, state));
 		}
@@ -137,7 +168,7 @@ public class ClientApplication {
 		try {
 			var rawJsonToken = AppHttpClient.sendTokenRequest(code);
 			var token = TokenParser.parse(rawJsonToken);
-			saveTokenToSession(sessionCookie, token);
+			saveToken(sessionCookie, token);
 			return ResponseEntity.ok("token received: %s".formatted(rawJsonToken));
 		} catch (IOException | InterruptedException e) {
 			var logger = LogFactory.getLog(getClass());
@@ -146,29 +177,6 @@ public class ClientApplication {
 			logger.error(message, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
 		}
-	}
-
-	private void saveTokenToSession(final String sessionId, final Token token) {
-		var session = getSession(sessionId);
-		session.setAttribute(TOKEN, token);
-		saveSession(session);
-	}
-
-	private Session createSession() {
-		var session = sessionRepository.createSession();
-		return session;
-	}
-
-	private Session getSession(final String sessionId) {
-		if (sessionId == null) {
-			throw new IllegalArgumentException("session not found");
-		} else {
-			return sessionRepository.findById(sessionId);
-		}
-	}
-
-	private void saveSession(final Session session) {
-		sessionRepository.save((MapSession) session);
 	}
 
 	@RequestMapping(FETCH_PROTECTED_RESOURCE_PATH)
@@ -184,7 +192,7 @@ public class ClientApplication {
 			var message = "successfully fetched: %s".formatted(resource);
 			return ResponseEntity.ok().body(message);
 		} catch (IOException | InterruptedException e) {
-			var message = "failed! %s".formatted(e.getMessage());
+			var message = "failed! authorize: <a href=\"%s\">sign in via gip hub</a> message: %s".formatted(SING_IN_VIA_GIP_HUB_PATH, e.getMessage());
 			return ResponseEntity.internalServerError().body(message);
 		}
 	}
