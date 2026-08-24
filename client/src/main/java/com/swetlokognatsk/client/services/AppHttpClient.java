@@ -22,6 +22,7 @@ import com.swetlokognatsk.client.external_services.ProtectedResource;
 import com.swetlokognatsk.client.model.AccessToken;
 import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.client.model.Token;
+import com.swetlokognatsk.client.model.TokenStrategy;
 
 public final class AppHttpClient {
 
@@ -58,7 +59,7 @@ public final class AppHttpClient {
         return encodedCredentials;
     }
 
-    public static String sendTokenRequest(final String code) throws IOException, InterruptedException {
+    public static String sendTokenRequest(final String code, final TokenStrategy tokenStrategy) throws IOException, InterruptedException {
         var uri = AuthorizationServer.getTokenEndpoint();
 
         // TODO revise it later, on connecting all parts together
@@ -72,12 +73,23 @@ public final class AppHttpClient {
         body.put("code", code);
         // TODO what does it do here? upd: it's used for security reasons. book says it'll be implemented on auth server's side in further chapter. this redirect_uri must be the same as the one from `/authorize?redirect_uri=...` redirect from client app.
         body.put("redirect_uri", Client.getRedirectURI());
-        return """
+        var jsonToken = switch (tokenStrategy) {
+        case SINGLE_ACCESS_TOKEN -> """
                 {
-                    "value": "asdkfjklsadfjksdfdkjfd",
+                    "value": "asingleaccestoken",
                     "type": "access"
                 }
                     """;
+        case REFRESH_AND_ACCESS_PAIR -> """
+                {
+                    "access_token": "accaccaccaccacc",
+                    "token_type": "Bearer",
+                    "refresh_token": "refrefrefrefrefref"
+                }
+                    """;
+        default -> throw new RuntimeException("unknown token strategy: %s".formatted(tokenStrategy));
+        };
+        return jsonToken;
         // TODO return real raw json
         // var result = sendHttpRequest("POST", uri, new HashMap<>(), body);
         // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
@@ -97,6 +109,7 @@ public final class AppHttpClient {
         var uri = ProtectedResource.getFetchResourceEndpoint();
 
         var headers = new HashMap<String, String>();
+        // TODO what other types exist besides bearer?
         var credentials = "Bearer %s".formatted(token.value);
         headers.put("Authorization", credentials);
 

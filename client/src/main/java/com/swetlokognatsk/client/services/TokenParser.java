@@ -5,14 +5,22 @@ import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.client.model.Token;
 import com.swetlokognatsk.client.model.TokenStrategy;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.deser.std.StdDeserializer;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 public final class TokenParser {
     private static final ObjectMapper objectMapper;
 
     static {
+        var customRefreshAndAccessTokensPairDeserializer = new SimpleModule();
+        customRefreshAndAccessTokensPairDeserializer.addDeserializer(RefreshAndAccessTokensPair.class, RefreshAndAccessTokensPairDeserializer.class);
         objectMapper = JsonMapper.builder()
+            .addModule(customRefreshAndAccessTokensPairDeserializer)
             .build();
     }
 
@@ -25,4 +33,13 @@ public final class TokenParser {
         };
         return objectMapper.readValue(jsonContent, clazz);
     }
+
+    private static class RefreshAndAccessTokensPairDeserializer extends StdDeserializer<RefreshAndAccessTokensPair> {
+
+        public RefreshAndAccessTokensPair deserialize(final JsonParser parser, final DeserializationContext ctx)
+        throws JacksonException {
+            // TODO finish RefreshAndAccessTokensPairDeserializer
+        }
+    }
 }
+
