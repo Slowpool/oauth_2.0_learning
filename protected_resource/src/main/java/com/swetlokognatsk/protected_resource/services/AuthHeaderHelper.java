@@ -1,4 +1,6 @@
-package com.swetlokognatsk.protected_resource;
+package com.swetlokognatsk.protected_resource.services;
+
+import com.swetlokognatsk.protected_resource.models.AccessTokenBody;
 
 public final class AuthHeaderHelper {
     private static final String BEARER_TOKEN_START = "Bearer ";
