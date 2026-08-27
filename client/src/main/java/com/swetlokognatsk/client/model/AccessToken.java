@@ -14,7 +14,7 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     public String toString() {
-        return value;
+        return "accessToken: %s, token type: %s".formatted(value, type);
     }
 
 }

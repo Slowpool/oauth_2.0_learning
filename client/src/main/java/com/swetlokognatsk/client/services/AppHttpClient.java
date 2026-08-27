@@ -1,5 +1,7 @@
 package com.swetlokognatsk.client.services;
 
+import static com.swetlokognatsk.client.model.TokenStrategy.SINGLE_ACCESS_TOKEN;
+
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.URI;
@@ -21,6 +23,7 @@ import com.swetlokognatsk.client.external_services.AuthorizationServer;
 import com.swetlokognatsk.client.external_services.ProtectedResource;
 import com.swetlokognatsk.client.model.AccessToken;
 import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
+import com.swetlokognatsk.client.model.RefreshToken;
 import com.swetlokognatsk.client.model.Token;
 import com.swetlokognatsk.client.model.TokenStrategy;
 
@@ -59,14 +62,12 @@ public final class AppHttpClient {
         return encodedCredentials;
     }
 
+    // TODO in prod tokenStrategy is redundant here
     public static String sendTokenRequest(final String code, final TokenStrategy tokenStrategy) throws IOException, InterruptedException {
         var uri = AuthorizationServer.getTokenEndpoint();
 
         // TODO revise it later, on connecting all parts together
-        var headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-        var credentials = encodeClientCredentials(Client.getId(), Client.getSecret());
-        headers.put("Authorization", "Basic %s".formatted(credentials));
+        var headers = buildHeaders();
 
         var body = new HashMap<String, String>();
         body.put("grant_type", "authorization_code");
@@ -100,12 +101,47 @@ public final class AppHttpClient {
         // }
     }
 
-    public static String sendTokenRefreshingRequest(final RefreshAndAccessTokensPair refreshToken) throws IOException, InterruptedException {
-        // TODO sendTokenRefreshingRequest
-        return "latch";
+    private static Map<String,String> buildHeaders() {
+        var headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/x-www-form-urlencoded");
+        var credentials = encodeClientCredentials(Client.getId(), Client.getSecret());
+        headers.put("Authorization", "Basic %s".formatted(credentials));
+        return headers;
     }
 
+    public static String sendTokenRefreshingRequest(final RefreshToken refreshToken) throws IOException, InterruptedException {
+        var headers = buildHeaders();
+
+        var body = new HashMap<String, String>();
+        body.put("grant_type", "refresh_token");
+        body.put("refresh_token", refreshToken.value);
+        
+        return """
+                {
+                    "access_token": "newacnewacnewacnewac",
+                    "token_type": "Bearer",
+                    "refresh_token": "newrefnewrefnewrefnewref"
+                }
+                    """;
+        // TODO return real raw json
+        // var result = sendHttpRequest("POST", uri, new HashMap<>(), body);
+        // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
+        //     return "latch";
+        // }
+        // else {
+        //     throw new IOException("auth returned error. status: %d, message: %s".formatted(result.statusCode(), result.body()));
+        // }
+    }
+
+    private static boolean isFirstTry = true;
+
     public static String fetchProtectedResource(final AccessToken token) throws IOException, InterruptedException {
+        // simulating the access token expiring
+        if (isFirstTry) {
+            isFirstTry = false;
+            throw new IOException("access token has expired");
+        }
+
         var uri = ProtectedResource.getFetchResourceEndpoint();
 
         var headers = new HashMap<String, String>();
@@ -113,19 +149,12 @@ public final class AppHttpClient {
         var credentials = "Bearer %s".formatted(token.value);
         headers.put("Authorization", credentials);
 
-        var result = sendHttpRequest("POST", uri, headers, new HashMap<>());
-        if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-            return "latch";
-            // TODO return real raw json
-            // var result = sendHttpRequest("POST", uri, new HashMap<>(), body);
-            // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-            //     return "latch";
-            // }
-            // else {
-            //     throw new IOException("auth returned error. status: %d, message: %s".formatted(result.statusCode(), result.body()));
-            // }
-        } else {
-            throw new IOException("response code was wrong: %d".formatted(result.statusCode()));
-        }
+        return "latch";
+        // var result = sendHttpRequest("POST", uri, headers, new HashMap<>());
+        // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
+        //     // TODO return real raw json
+        // } else {
+        //     throw new IOException("response code was wrong: %d".formatted(result.statusCode()));
+        // }
     }
 }

@@ -72,7 +72,7 @@ public class ClientApplication {
 	}
 
 	@GetMapping(HOME)
-	public ModelAndView home(final Model model, @CookieValue(SESSION_COOKIE) String sessionId, final HttpServletResponse response) {
+	public ModelAndView home(final Model model, @CookieValue(name = SESSION_COOKIE, required = false) String sessionId, final HttpServletResponse response) {
 		sessionId = ensureSessionExists(sessionId, response);
 
 		model.addAttribute("useAccessTokenStrategyUri", USE_ACCESS_TOKEN_STRATEGY);
@@ -98,6 +98,8 @@ public class ClientApplication {
 	// TODO does it work with enum???
 	public RedirectView useStrategy(@CookieValue(SESSION_COOKIE) final String sessionId, @PathVariable final TokenStrategy newStrategy) {
 		setTokenStrategy(sessionId, newStrategy);
+		removeAccessToken(sessionId);
+		removeRefreshToken();
 
 		// TODO is there something more suitable than redirectVIEW??? what is it at all?
 		return new RedirectView(HOME);
@@ -123,7 +125,7 @@ public class ClientApplication {
 
 		try {
 			var tokenStrategy = getTokenStrategy(sessionId);
-			var rawJsonToken = AppHttpClient.sendTokenRequest(code);
+			var rawJsonToken = AppHttpClient.sendTokenRequest(code, tokenStrategy);
 			Token token = TokenParser.parse(rawJsonToken, tokenStrategy);
 			switch (token) {
 			case AccessToken accessToken:
@@ -136,7 +138,7 @@ public class ClientApplication {
 			default:
 				throw new RuntimeException("unknown token: " + token);
 			}
-			return ResponseEntity.ok("token received: %s".formatted(rawJsonToken));
+			return ResponseEntity.ok("token received. raw: %s, parsed: %s".formatted(rawJsonToken, token.toString()));
 		} catch (IOException | InterruptedException e) {
 			var logger = LogFactory.getLog(getClass());
 			var message = "failed to get the token: %s".formatted(e.getMessage());
@@ -155,18 +157,42 @@ public class ClientApplication {
 		}
 
 		try {
-			var resource = AppHttpClient.fetchProtectedResource(accessToken);
-			var message = "successfully fetched: %s".formatted(resource);
-			return ResponseEntity.ok().body(message);
+			return fetchProtectedResourceImpl(accessToken);
 		} catch (IOException | InterruptedException e) {
-			var message = "failed! authorize: <a href=\"%s\">sign in via gip hub</a> message: %s".formatted(SING_IN_VIA_GIP_HUB_PATH, e.getMessage());
+			return tryDoingFallbackOfResourceFetching(sessionId);
+		}
+	}
+
+	private ResponseEntity<?> tryDoingFallbackOfResourceFetching(final String sessionId) {
+		try {
+			return switch (getTokenStrategy(sessionId)) {
+				// TODO 403 or 401?
+			case SINGLE_ACCESS_TOKEN -> ResponseEntity.status(403).body("Access token has expired");
+			case REFRESH_AND_ACCESS_PAIR -> {
+				var rawJson = AppHttpClient.sendTokenRefreshingRequest(getRefreshToken());
+				var refreshAndAccessTokensPair = (RefreshAndAccessTokensPair) TokenParser.parse(rawJson, TokenStrategy.REFRESH_AND_ACCESS_PAIR);
+				saveAccessToken(sessionId, refreshAndAccessTokensPair.accessToken);
+				saveRefreshToken(refreshAndAccessTokensPair.refreshToken);
+
+				var resource = fetchProtectedResourceImpl(refreshAndAccessTokensPair.accessToken);
+				yield resource;
+			}
+			};
+		} catch (IOException | InterruptedException innerE) {
+			var message = "failed! authorize: <a href=\"%s\">sign in via gip hub</a> message: %s".formatted(SING_IN_VIA_GIP_HUB_PATH, innerE.getMessage());
 			return ResponseEntity.internalServerError().body(message);
 		}
 	}
 
+	private ResponseEntity<?> fetchProtectedResourceImpl(final AccessToken accessToken) throws IOException, InterruptedException {
+		var resource = AppHttpClient.fetchProtectedResource(accessToken);
+		var message = "successfully fetched: %s".formatted(resource);
+		return ResponseEntity.ok().body(message);
+	}
+
 	private Session getSession(final String sessionId) {
 		if (sessionId == null) {
-			throw new IllegalArgumentException("session not found");
+			return null;
 		} else {
 			return sessionRepository.findById(sessionId);
 		}
@@ -189,6 +215,10 @@ public class ClientApplication {
 		Database.saveRefreshToken(refreshToken);
 	}
 
+	private void removeRefreshToken() {
+		Database.saveRefreshToken(null);
+	}
+
 	private AccessToken getAccessToken(final String sessionId) {
 		var session = getSession(sessionId);
 		if (session == null) {
@@ -202,6 +232,10 @@ public class ClientApplication {
 		var session = getSession(sessionId);
 		session.setAttribute(TOKEN, accessToken);
 		saveSession(session);
+	}
+
+	private void removeAccessToken(final String sessionId) {
+		saveAccessToken(sessionId, null);
 	}
 
 	private Token getToken(final String sessionId) {
