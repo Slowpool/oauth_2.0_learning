@@ -15,4 +15,6 @@
 
    <include file="creating_access_tokens_table.xml" relativeToChangelogFile="true"/>
 
+   <include file="1787852940_modify_access_token_fields.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
