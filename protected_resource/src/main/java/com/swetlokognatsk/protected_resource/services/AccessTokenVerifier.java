@@ -14,6 +14,6 @@ public final class AccessTokenVerifier {
 
     public void verifyAccessToken(final AccessTokenValue accessTokenValue) throws AccessTokenNotFoundException {
         var accessToken = database.findAccessToken(accessTokenValue);
-
+        // TODO verify expiration date. anything else?
     }
 }

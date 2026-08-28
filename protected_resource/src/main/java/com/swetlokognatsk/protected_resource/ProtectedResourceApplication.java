@@ -2,19 +2,21 @@ package com.swetlokognatsk.protected_resource;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
+import com.swetlokognatsk.protected_resource.models.AccessToken;
 import com.swetlokognatsk.protected_resource.models.AccessTokenBody;
 import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import static com.swetlokognatsk.protected_resource.services.AuthHeaderHelper.*;
 
 // TODO is it possible to configure vs code to run all 4 debuggers
@@ -34,18 +36,18 @@ public class ProtectedResourceApplication {
 		return "<h1>Hello ProtectedResourceApplication</h1>";
 	}
 
-	@GetMapping("/resource/fetch")
+	@RequestMapping("/resource/fetch")
 	// TODO why not RequestBody? what if RequestBody param has the same name as RequestParam and both of them are in request?
-	public String fetchProtectedResource(@RequestHeader(name = "Authorization", required = false) final String auth, @RequestBody(required = false) final AccessTokenBody accessTokenBody, @RequestParam(required = false) final String accessTokenParam) {
+	public String fetchProtectedResource(@RequestHeader(name = "Authorization", required = false) final String auth, @RequestBody(required = false) final MultiValueMap<String, String> formData, HttpServletRequest request) {
 		String accessTokenValue;
 		if (hasAuthBearerHeader(auth)) {
 			accessTokenValue = cutAccessToken(auth);
 		}
 		// TODO does it work? or it has null as accessToken value?
-		else if (hasFormUrlencodedToken(accessTokenBody)) {
-			accessTokenValue = accessTokenBody.accessToken();
-		} else if (hasQueryParamToken(accessTokenParam)) {
-			accessTokenValue = accessTokenParam;
+		else if (hasFormUrlencodedToken(formData.getFirst("accessToken"))) {
+			accessTokenValue = formData.getFirst("accessToken");
+		} else if (hasQueryParamToken(request)) {
+			accessTokenValue = request.getParameter("accessToken");
 		} else {
 			accessTokenValue = null;
 		}
@@ -55,13 +57,12 @@ public class ProtectedResourceApplication {
 			var accessToken = new AccessTokenValue(accessTokenValue);
 			try {
 				verifyAccessToken(accessToken);
+				response = "BAZINGA.PNG";
+			} catch (AccessTokenNotFoundException e) {
+				response = "400 accessToken is not found in database: %s".formatted(e.getMessage());
 			}
-			catch (AccessTokenNotFoundException e) {
-				response = "accessToken is not found: %s".formatted(e.getMessage());
-			}
-			response = "BAZINGA.PNG";
 		} else {
-			response = "accessToken is not found";
+			response = "400 accessToken is not found";
 		}
 		return response;
 	}
