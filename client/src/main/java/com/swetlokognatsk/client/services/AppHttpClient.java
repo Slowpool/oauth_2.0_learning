@@ -1,7 +1,6 @@
 package com.swetlokognatsk.client.services;
 
 import static com.swetlokognatsk.client.model.TokenStrategy.SINGLE_ACCESS_TOKEN;
-
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.URI;
@@ -17,6 +16,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.swetlokognatsk.client.Client;
 import com.swetlokognatsk.client.external_services.AuthorizationServer;
@@ -26,19 +26,42 @@ import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.client.model.RefreshToken;
 import com.swetlokognatsk.client.model.Token;
 import com.swetlokognatsk.client.model.TokenStrategy;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 public final class AppHttpClient {
 
-    private static HttpResponse<?> sendHttpRequest(final String method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
-        // TODO use headers
-        var bodyContent = mapBodyToString(body);
+    private static HttpResponse<?> sendHttpRequest(final RequestMethod method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
+        var requestBuilder = HttpRequest.newBuilder(URI.create(uri));
+        switch (method) {
+            case GET:
+                requestBuilder.GET();
+                break;
+            case POST:
+                var bodyContent = mapBodyToString(body);
+                var bodyPublisher = BodyPublishers.ofString(bodyContent);
+                requestBuilder.POST(bodyPublisher);
+                break;
+            default:
+                throw new RuntimeException("unknown method: %s".formatted(method));
+        }
 
-        var bodyPublisher = BodyPublishers.ofString(bodyContent);
-        var request = HttpRequest.newBuilder(URI.create(uri)).POST(bodyPublisher).build();
+        addHeaders(requestBuilder, headers);
+        
+        var request = requestBuilder.build();
 
         var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
         var response = client.send(request, BodyHandlers.ofString());
         return response;
+    }
+
+    private static HttpResponse<?> sendHttpRequest(final RequestMethod method, final String uri, final Map<String, String> headers) throws IOException, InterruptedException {
+        return sendHttpRequest(method, uri, headers, new HashMap<>());
+    }
+
+    private static void addHeaders(final HttpRequest.Builder requestBuilder, final Map<String,String> headers) {
+        for (var headerName : headers.keySet()) {
+            requestBuilder.header(headerName, headers.get(headerName));
+        }
     }
 
     private static String mapBodyToString(final Map<String, String> body) {
@@ -77,7 +100,7 @@ public final class AppHttpClient {
         var jsonToken = switch (tokenStrategy) {
         case SINGLE_ACCESS_TOKEN -> """
                 {
-                    "value": "asingleaccestoken",
+                    "value": "accaccaccaccacc",
                     "type": "access"
                 }
                     """;
@@ -92,7 +115,7 @@ public final class AppHttpClient {
         };
         return jsonToken;
         // TODO return real raw json
-        // var result = sendHttpRequest("POST", uri, new HashMap<>(), body);
+        // var result = sendHttpRequest(POST, uri, new HashMap<>(), body);
         // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
         //     return "latch";
         // }
@@ -101,7 +124,7 @@ public final class AppHttpClient {
         // }
     }
 
-    private static Map<String,String> buildHeaders() {
+    private static Map<String, String> buildHeaders() {
         var headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         var credentials = encodeClientCredentials(Client.getId(), Client.getSecret());
@@ -115,7 +138,7 @@ public final class AppHttpClient {
         var body = new HashMap<String, String>();
         body.put("grant_type", "refresh_token");
         body.put("refresh_token", refreshToken.value);
-        
+
         return """
                 {
                     "access_token": "newacnewacnewacnewac",
@@ -124,7 +147,7 @@ public final class AppHttpClient {
                 }
                     """;
         // TODO return real raw json
-        // var result = sendHttpRequest("POST", uri, new HashMap<>(), body);
+        // var result = sendHttpRequest(POST, uri, new HashMap<>(), body);
         // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
         //     return "latch";
         // }
@@ -136,11 +159,11 @@ public final class AppHttpClient {
     private static boolean isFirstTry = true;
 
     public static String fetchProtectedResource(final AccessToken token) throws IOException, InterruptedException {
-        // simulating the access token expiring
-        if (isFirstTry) {
-            isFirstTry = false;
-            throw new IOException("access token has expired");
-        }
+        // // simulating the access token expiring
+        // if (isFirstTry) {
+        //     isFirstTry = false;
+        //     throw new IOException("access token has expired");
+        // }
 
         var uri = ProtectedResource.getFetchResourceEndpoint();
 
@@ -149,12 +172,13 @@ public final class AppHttpClient {
         var credentials = "Bearer %s".formatted(token.value);
         headers.put("Authorization", credentials);
 
-        return "latch";
-        // var result = sendHttpRequest("POST", uri, headers, new HashMap<>());
-        // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-        //     // TODO return real raw json
-        // } else {
-        //     throw new IOException("response code was wrong: %d".formatted(result.statusCode()));
-        // }
+        var result = sendHttpRequest(GET, uri, headers);
+        if (result.statusCode() >= 200 && result.statusCode() <= 299) {
+            var body = result.body();
+            return (String) body;
+        } else {
+            throw new IOException("response code was wrong: %d".formatted(result.statusCode()));
+        }
+
     }
 }

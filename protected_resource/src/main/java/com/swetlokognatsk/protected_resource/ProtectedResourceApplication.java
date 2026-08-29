@@ -3,12 +3,14 @@ package com.swetlokognatsk.protected_resource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.models.AccessToken;
@@ -41,7 +43,7 @@ public class ProtectedResourceApplication {
 	@RequestMapping("/resource/fetch")
 	// https://stackoverflow.com/questions/60671020/how-to-get-spring-boot-to-map-query-parameters-separately-from-form-data
 	// in prod only one way of getting accessToken must be implemented. whereas here may be collisions, though it works well for any request
-	public String fetchProtectedResource(@RequestHeader(name = "Authorization", required = false) final String auth, @RequestBody(required = false) final MultiValueMap<String, String> formData, HttpServletRequest request) {
+	public ResponseEntity<String> fetchProtectedResource(@RequestHeader(name = "Authorization", required = false) final String auth, @RequestBody(required = false) final MultiValueMap<String, String> formData, HttpServletRequest request) {
 		String accessTokenValue;
 		if (hasAuthBearerHeader(auth)) {
 			accessTokenValue = cutAccessToken(auth);
@@ -54,17 +56,19 @@ public class ProtectedResourceApplication {
 			accessTokenValue = null;
 		}
 
-		String response;
+		ResponseEntity<String> response;
 		if (accessTokenValue != null) {
 			var accessToken = new AccessTokenValue(accessTokenValue);
 			try {
 				verifyAccessToken(accessToken);
-				response = "BAZINGA.PNG";
+				response = ResponseEntity.ok("BAZINGA.PNG");
 			} catch (AccessTokenNotFoundException e) {
-				response = "400 accessToken is not found in database: %s".formatted(e.getMessage());
+				response = ResponseEntity.badRequest()
+					.body("accessToken is not found in database: %s".formatted(e.getMessage()));
 			}
 		} else {
-			response = "400 accessToken is not found";
+			response = ResponseEntity.badRequest()
+					.body("accessToken is not found in request");
 		}
 		return response;
 	}

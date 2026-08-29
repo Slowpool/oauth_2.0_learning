@@ -166,7 +166,7 @@ public class ClientApplication {
 	private ResponseEntity<?> tryDoingFallbackOfResourceFetching(final String sessionId) {
 		try {
 			return switch (getTokenStrategy(sessionId)) {
-				// TODO 403 or 401?
+				// TODO throw TokenStrategyDoesNotSupportFallback
 			case SINGLE_ACCESS_TOKEN -> ResponseEntity.status(403).body("Access token has expired");
 			case REFRESH_AND_ACCESS_PAIR -> {
 				var rawJson = AppHttpClient.sendTokenRefreshingRequest(getRefreshToken());
