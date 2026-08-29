@@ -19,6 +19,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import static com.swetlokognatsk.protected_resource.services.AuthHeaderHelper.*;
 
+import java.util.Map;
+
 // TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication
 @RestController
@@ -37,14 +39,14 @@ public class ProtectedResourceApplication {
 	}
 
 	@RequestMapping("/resource/fetch")
-	// TODO why not RequestBody? what if RequestBody param has the same name as RequestParam and both of them are in request?
+	// https://stackoverflow.com/questions/60671020/how-to-get-spring-boot-to-map-query-parameters-separately-from-form-data
+	// in prod only one way of getting accessToken must be implemented. whereas here may be collisions, though it works well for any request
 	public String fetchProtectedResource(@RequestHeader(name = "Authorization", required = false) final String auth, @RequestBody(required = false) final MultiValueMap<String, String> formData, HttpServletRequest request) {
 		String accessTokenValue;
 		if (hasAuthBearerHeader(auth)) {
 			accessTokenValue = cutAccessToken(auth);
 		}
-		// TODO does it work? or it has null as accessToken value?
-		else if (hasFormUrlencodedToken(formData.getFirst("accessToken"))) {
+		else if (formData != null && hasFormUrlencodedToken(formData.getFirst("accessToken"))) {
 			accessTokenValue = formData.getFirst("accessToken");
 		} else if (hasQueryParamToken(request)) {
 			accessTokenValue = request.getParameter("accessToken");
