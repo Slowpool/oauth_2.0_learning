@@ -1,7 +1,7 @@
 services:
-  authorization_server:
+  authorization-server:
     container_name:
-      'authorization_server'
+      'authorization-server'
     build:
       context: '../authorization_server'
       dockerfile: './.docker/Dockerfile.dev'
@@ -31,9 +31,9 @@ services:
       - "${CLIENT_PORT}:8082"
       - "5016:5006"
 
-  protected_resource:
+  protected-resource:
     container_name:
-      'protected_resource'
+      'protected-resource'
     build:
       context: '../protected_resource'
       dockerfile: './.docker/Dockerfile.dev'

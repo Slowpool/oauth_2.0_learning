@@ -34,7 +34,7 @@ public class ProtectedResourceApplication {
 	}
 
 	@GetMapping(HOME)
-	public String home(@RequestHeader(name = "Authorization", required = false) final String auth) {
+	public String home() {
 		return "<h1>Hello ProtectedResourceApplication</h1>";
 	}
 
