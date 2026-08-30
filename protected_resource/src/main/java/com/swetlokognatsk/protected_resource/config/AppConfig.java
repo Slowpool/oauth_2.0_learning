@@ -8,7 +8,7 @@ import com.swetlokognatsk.protected_resource.ports.Database;
 import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
 
 @Configuration
-public class AppConfig {
+class AppConfig {
 
     @Bean
     // TODO it's package-private because it's accessed via reflection?
