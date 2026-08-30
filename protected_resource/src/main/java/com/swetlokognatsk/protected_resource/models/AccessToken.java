@@ -1,21 +1,34 @@
 package com.swetlokognatsk.protected_resource.models;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import java.util.Set;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "access_tokens")
 public final class AccessToken {
     @Id
-    public int id;
-    
+    private int id;
+
     @Embedded
+    // TODO what's going on here?
     @AttributeOverride(name = "value", column = @Column(name = "access_token", nullable = false))
-    public AccessTokenValue value;
+    private AccessTokenValue value;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(inverseJoinColumns = @JoinColumn(name = "scope_id"))
+    private Set<ScopeEntity> scopes;
+
+    public int getId() {
+        return id;
+    }
+
+    public AccessTokenValue getValue() {
+        return value;
+    }
+
+    public Set<ScopeEntity> getScopes() {
+        return scopes;
+    }
 
     public AccessToken() {
     }

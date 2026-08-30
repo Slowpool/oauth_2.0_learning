@@ -1,16 +1,23 @@
 package com.swetlokognatsk.protected_resource.ports;
 
+import java.util.Set;
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.models.AccessToken;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 
 public interface Database {
 
-    AccessToken findAccessToken(final AccessTokenValue accessTokenValue) throws AccessTokenNotFoundException;
+    AccessToken findAccessToken(AccessTokenValue accessTokenValue) throws AccessTokenNotFoundException;
 
-    void saveAccessToken(final AccessToken accessToken);
+    void saveAccessToken(AccessToken accessToken);
 
-    void deleteAccessToken(final AccessTokenValue accessTokenValue);
+    void deleteAccessToken(AccessTokenValue accessTokenValue);
 
     void deleteAll();
+
+    Set<String> getWords();
+
+    void addWord(String word);
+
+    void deleteWord(String word);
 }

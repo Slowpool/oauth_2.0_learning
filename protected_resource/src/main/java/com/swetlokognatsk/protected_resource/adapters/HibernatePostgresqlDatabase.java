@@ -1,5 +1,8 @@
 package com.swetlokognatsk.protected_resource.adapters;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.adapters.hibernate.AccessTokenDao;
 import com.swetlokognatsk.protected_resource.models.AccessToken;
@@ -28,6 +31,19 @@ public final class HibernatePostgresqlDatabase implements Database {
     }
 
     public void deleteAll() {
+
+    }
+
+    public Set<String> getWords() {
+        return new HashSet<>();
+        // return wordsDao.getWords();
+    }
+
+    public void addWord(String word) {
+
+    }
+
+    public void deleteWord(String word) {
 
     }
 
