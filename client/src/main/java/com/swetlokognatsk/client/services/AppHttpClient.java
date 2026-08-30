@@ -87,7 +87,7 @@ public final class AppHttpClient {
 
     // TODO in prod tokenStrategy is redundant here
     public static String sendTokenRequest(final String code, final TokenStrategy tokenStrategy) throws IOException, InterruptedException {
-        var uri = AuthorizationServer.getTokenEndpoint();
+        var uri = AuthorizationServer.getInternalTokenEndpoint();
 
         // TODO revise it later, on connecting all parts together
         var headers = buildHeaders();
@@ -173,11 +173,11 @@ public final class AppHttpClient {
         headers.put("Authorization", credentials);
 
         var result = sendHttpRequest(GET, uri, headers);
+        var body = result.body();
         if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-            var body = result.body();
             return (String) body;
         } else {
-            throw new IOException("response code was wrong: %d".formatted(result.statusCode()));
+            throw new IOException("response code was wrong: %d. message: %s".formatted(result.statusCode(), body));
         }
 
     }

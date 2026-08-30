@@ -159,28 +159,43 @@ public class ClientApplication {
 		try {
 			return fetchProtectedResourceImpl(accessToken);
 		} catch (IOException | InterruptedException e) {
-			return tryDoingFallbackOfResourceFetching(sessionId);
+			// TODO ensure this scenario works
+			try {
+				return updateRefreshTokenAndFetchResourceAgain(sessionId);
+			}
+			catch (TokenStrategyDoesNotSupportRefreshTokenException innerE) {
+				e.addSuppressed(innerE);
+				return ResponseEntity.internalServerError().body(e.getMessage());
+			}
 		}
 	}
 
-	private ResponseEntity<?> tryDoingFallbackOfResourceFetching(final String sessionId) {
-		try {
-			return switch (getTokenStrategy(sessionId)) {
-				// TODO throw TokenStrategyDoesNotSupportFallback
-			case SINGLE_ACCESS_TOKEN -> ResponseEntity.status(403).body("Access token has expired");
-			case REFRESH_AND_ACCESS_PAIR -> {
-				var rawJson = AppHttpClient.sendTokenRefreshingRequest(getRefreshToken());
-				var refreshAndAccessTokensPair = (RefreshAndAccessTokensPair) TokenParser.parse(rawJson, TokenStrategy.REFRESH_AND_ACCESS_PAIR);
-				saveAccessToken(sessionId, refreshAndAccessTokensPair.accessToken);
-				saveRefreshToken(refreshAndAccessTokensPair.refreshToken);
+	private void updateRefreshToken(final String sessionId) throws IOException, InterruptedException {
+		var tokenStrategy = getTokenStrategy(sessionId);
+		switch (tokenStrategy) {
+		case SINGLE_ACCESS_TOKEN:
+			throw new IllegalStateException("SINGLE_ACCESS_TOKEN token strategy does not suport token updating");
+		case REFRESH_AND_ACCESS_PAIR:
+			var rawJson = AppHttpClient.sendTokenRefreshingRequest(getRefreshToken());
+			var refreshAndAccessTokensPair = (RefreshAndAccessTokensPair) TokenParser.parse(rawJson, TokenStrategy.REFRESH_AND_ACCESS_PAIR);
+			saveAccessToken(sessionId, refreshAndAccessTokensPair.accessToken);
+			saveRefreshToken(refreshAndAccessTokensPair.refreshToken);
+			break;
+		default:
+			throw new IllegalArgumentException("unknown token strategy: %s".formatted(tokenStrategy));
+		}
+	}
 
-				var resource = fetchProtectedResourceImpl(refreshAndAccessTokensPair.accessToken);
-				yield resource;
-			}
-			};
+	private ResponseEntity<?> updateRefreshTokenAndFetchResourceAgain(final String sessionId) throws TokenStrategyDoesNotSupportRefreshTokenException {
+		if (getTokenStrategy(sessionId) != REFRESH_AND_ACCESS_PAIR) {
+			throw new TokenStrategyDoesNotSupportRefreshTokenException();
+		}
+
+		try {
+			updateRefreshToken(sessionId);
+			return fetchProtectedResourceImpl(getAccessToken(sessionId));
 		} catch (IOException | InterruptedException innerE) {
-			var message = "failed! authorize: <a href=\"%s\">sign in via gip hub</a> message: %s".formatted(SING_IN_VIA_GIP_HUB_PATH, innerE.getMessage());
-			return ResponseEntity.internalServerError().body(message);
+			return ResponseEntity.internalServerError().body("failed to update refreshToken: %s".formatted(innerE.getMessage()));
 		}
 	}
 

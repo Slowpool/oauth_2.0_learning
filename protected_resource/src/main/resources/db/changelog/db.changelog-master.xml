@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
    <changeSet id="1" author="my_name">
       <createTable tableName="test_table">
          <column name="test_id" type="int">
-            <constraints primaryKey="true"/>
+            <constraints primaryKey="true" />
          </column>
-         <column name="test_column" type="INT"/>
+         <column name="test_column" type="INT" />
       </createTable>
    </changeSet>
 
-   <include file="creating_access_tokens_table.xml" relativeToChangelogFile="true"/>
+   <include file="creating_access_tokens_table.xml" relativeToChangelogFile="true" />
 
-   <include file="1787852940_modify_access_token_fields.xml" relativeToChangelogFile="true"/>
+   <include file="1787852940_modify_access_token_fields.xml" relativeToChangelogFile="true" />
+
+   <include file="1788083164_add_client_id_and_scope_columns_to_access_tokens.xml" relativeToChangelogFile="true" />
+
+   <include file="1788094532_add_scopes_table.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>

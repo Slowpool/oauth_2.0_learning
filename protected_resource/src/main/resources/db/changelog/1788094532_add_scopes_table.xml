@@ -1,0 +1,47 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="6" author="slowpool">
+        <createTable tableName="scopes">
+            <column name="id" type="int">
+                <constraints primaryKey="true" />
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false" unique="true" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="7" author="slowpool">
+        <createTable tableName="access_tokens_scopes">
+            <column name="scope_id" type="int">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="scopes_scope_id" />
+            </column>
+            <column name="access_token_id" type="int">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            constraintName="access_tokens_acopes_access_token_id"
+            baseTableName="access_tokens_scopes"
+            baseColumnNames="access_token_id"
+            referencedTableName="access_tokens"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"
+        />
+
+        <addForeignKeyConstraint
+            constraintName="access_tokens_acopes_scope_id"
+            baseTableName="access_tokens_scopes"
+            baseColumnNames="scope_id"
+            referencedTableName="scopes"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"
+        />
+    </changeSet>
+
+</databaseChangeLog>

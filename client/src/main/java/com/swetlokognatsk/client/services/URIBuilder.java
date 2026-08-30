@@ -32,7 +32,7 @@ public class URIBuilder {
     }
 
     public static String buildAuthorizationURI(final String state) {
-        var baseUri = AuthorizationServer.getAuthorizationEndpoint();
+        var baseUri = AuthorizationServer.getExternalAuthorizationEndpoint();
 
         var options = new HashMap<String, String>();
         options.put("response_type", "code");
