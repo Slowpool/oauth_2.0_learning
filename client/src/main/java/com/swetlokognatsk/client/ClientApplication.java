@@ -164,7 +164,7 @@ public class ClientApplication {
 	public ResponseEntity<?> fetchProtectedResource(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var accessToken = getAccessToken(sessionId);
 		if (accessToken == null) {
-			return badRequest("access token is not found in session");
+			return noAccessToken();
 		}
 
 		try {
@@ -184,22 +184,30 @@ public class ClientApplication {
 	public ResponseEntity<String> listWords(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var accessToken = getAccessToken(sessionId);
 		if (accessToken == null) {
-			return badRequest("access token is not found in session");
+			return noAccessToken();
 		}
 
 		try {
 			var wordsString = AppHttpClient.sendGetWordsRequest(accessToken);
-			"obtained words: %s".formatted(wordsString);
-			return ok(wordsString);
+			return ok("obtained words: %s".formatted(wordsString));
 		} catch (IOException | InterruptedException e) {
 			return error("failed to obtain words: %s".formatted(e.getMessage()));
 		}
 	}
 
 	@PostMapping(ADD_WORD_URI)
-	public ResponseEntity<String> addWord(@RequestParam final String newWord) {
-		// TODO
-		return ResponseEntity.status(201).build();
+	public ResponseEntity<String> addWord(@CookieValue(SESSION_COOKIE) final String sessionId, @RequestParam final String newWord) {
+		var accessToken = getAccessToken(sessionId);
+		if (accessToken == null) {
+			return noAccessToken();
+		}
+
+		try {
+			AppHttpClient.sendAddWordRequest(accessToken, newWord);
+			return ResponseEntity.status(201).body("word %s added".formatted(newWord));
+		} catch (IOException | InterruptedException e) {
+			return error("failed to add word: %s".formatted(e.getMessage()));
+		}
 	}
 
 	@DeleteMapping(DELETE_WORD_URI)
@@ -360,6 +368,10 @@ public class ClientApplication {
 
 	private static ResponseEntity<String> badRequest(final String message) {
 		return ResponseEntity.badRequest().body(message);
+	}
+
+	private static ResponseEntity<String> noAccessToken() {
+		return badRequest("access token is not found in session");
 	}
 
 }

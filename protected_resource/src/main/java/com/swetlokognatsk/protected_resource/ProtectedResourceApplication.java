@@ -1,9 +1,12 @@
 package com.swetlokognatsk.protected_resource;
 
+import java.util.Map;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,8 +54,9 @@ public class ProtectedResourceApplication {
 	}
 
 	@PostMapping("/words")
-	public ResponseEntity<String> addWord(@RequestParam final String newWord) {
+	public ResponseEntity<String> addWord(@RequestBody final MultiValueMap<String, String> bodyParams) {
 		var db = getDatabase();
+		var newWord = bodyParams.get("newWord").getFirst();
 		db.addWord(newWord);
 		return ResponseEntity.status(201).build();
 	}

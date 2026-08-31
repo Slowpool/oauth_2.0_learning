@@ -40,6 +40,7 @@ public final class AppHttpClient {
         case POST:
             var bodyContent = mapBodyToString(body);
             var bodyPublisher = BodyPublishers.ofString(bodyContent);
+            requestBuilder.header("Content-Type", "application/x-www-form-urlencoded");
             requestBuilder.POST(bodyPublisher);
             break;
         default:
@@ -50,7 +51,10 @@ public final class AppHttpClient {
 
         var request = requestBuilder.build();
 
-        var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
+        var client = HttpClient.newBuilder()
+            .followRedirects(Redirect.NEVER)
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
         var response = client.send(request, BodyHandlers.ofString());
         return response;
     }
@@ -93,7 +97,7 @@ public final class AppHttpClient {
         // TODO revise it later, on connecting all parts together
         var headers = buildAuthHeaders();
 
-        var body = new HashMap<String, String>();
+        var body = newBody();
         body.put("grant_type", "authorization_code");
         body.put("code", code);
         // TODO what does it do here? upd: it's used for security reasons. book says it'll be implemented on auth server's side in further chapter. this redirect_uri must be the same as the one from `/authorize?redirect_uri=...` redirect from client app.
@@ -136,7 +140,7 @@ public final class AppHttpClient {
     public static String sendTokenRefreshingRequest(final RefreshToken refreshToken) throws IOException, InterruptedException {
         var headers = buildAuthHeaders();
 
-        var body = new HashMap<String, String>();
+        var body = newBody();
         body.put("grant_type", "refresh_token");
         body.put("refresh_token", refreshToken.value);
 
@@ -186,9 +190,25 @@ public final class AppHttpClient {
         var uri = ProtectedResource.getWordsListEndpoint();
 
         var headers = buildResourceHeaders(accessToken);
-        var result = sendHttpRequest(GET, uri, headers);
 
+        var result = sendHttpRequest(GET, uri, headers);
         return bodyUnlessError(result);
+    }
+
+    public static void sendAddWordRequest(final AccessToken accessToken, final String newWord) throws IOException, InterruptedException {
+        var uri = ProtectedResource.getWordsListEndpoint();
+
+        var headers = buildResourceHeaders(accessToken);
+
+        var body = newBody();
+        body.put("newWord", newWord);
+
+        var result = sendHttpRequest(POST, uri, headers, body);
+        bodyUnlessError(result);
+    }
+
+    private static Map<String, String> newBody() {
+        return new HashMap<String, String>();
     }
 
     private static String bodyUnlessError(final HttpResponse<?> result) throws IOException {

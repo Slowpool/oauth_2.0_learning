@@ -36,16 +36,16 @@
     </div>
     .............
     <div>
-        <form th:action="${addWordUri}">
+        <form method="POST" th:action="${addWordUri}">
             <button type="submit">
                 <h1>add word</h1>
             </button>
-            <input type="text" placeholder="new word">
+            <input name="newWord" type="text" placeholder="new word">
         </form>
     </div>
     .............
     <div>
-        <form th:action="${removeWordUri}">
+        <form method="DELETE" th:action="${removeWordUri}">
             <button type="submit">
                 <h1>delete word</h1>
             </button>
