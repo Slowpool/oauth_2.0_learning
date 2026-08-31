@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.swetlokognatsk.protected_resource.ports.Database;
+
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -46,7 +50,7 @@ public class ProtectedResourceApplication {
 	}
 
 	@GetMapping("/words")
-	public ResponseEntity<String> listWords() {
+	public ResponseEntity<String> getWords() {
 		var db = getDatabase();
 		var words = db.getWords();
 		var wordsString = words.stream().reduce((resultString, word) -> "%s %s".formatted(resultString, word)).orElse("");
@@ -57,14 +61,24 @@ public class ProtectedResourceApplication {
 	public ResponseEntity<String> addWord(@RequestBody final MultiValueMap<String, String> bodyParams) {
 		var db = getDatabase();
 		var newWord = bodyParams.get("newWord").getFirst();
-		db.addWord(newWord);
-		return ResponseEntity.status(201).build();
+		try {
+			db.addWord(newWord);
+			return ResponseEntity.status(201).build();
+		}
+		catch(EntityExistsException e) {
+			return ResponseEntity.status(409).build();
+		}
 	}
 
 	@DeleteMapping("/words")
-	public ResponseEntity<String> deleteWord(@RequestBody final String wordToDelete) {
+	public ResponseEntity<String> removeWord(@RequestParam final String wordToDelete) {
 		var db = getDatabase();
-		db.deleteWord(wordToDelete);
+		try {
+			db.removeWord(wordToDelete);
+		}
+		catch (EntityNotFoundException e) {
+			return ResponseEntity.notFound().build();
+		}
 		return ResponseEntity.status(204).build();
 	}
 

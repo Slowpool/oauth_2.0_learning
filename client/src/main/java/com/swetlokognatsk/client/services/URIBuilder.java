@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
-
 import com.swetlokognatsk.client.Client;
 import com.swetlokognatsk.client.external_services.AuthorizationServer;
+import com.swetlokognatsk.client.external_services.ProtectedResource;
 
 public class URIBuilder {
 
@@ -57,6 +57,15 @@ public class URIBuilder {
 
     public static String buildProtectedResourceURI() {
         return "nope";
+    }
+
+    public static String buildRemoveWordUri(final String wordToDelete) {
+        var endpointUri = ProtectedResource.getRemoveWordEndpoint();
+
+        var options = new HashMap<String, String>();
+        options.put("wordToDelete", wordToDelete);
+
+        return buildURI(endpointUri, options, null, true);
     }
 
 }

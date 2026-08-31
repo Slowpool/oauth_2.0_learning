@@ -28,7 +28,7 @@
 </br>
 <div>
     <div>
-        <form th:action="${getWordsUri}">
+        <form method="GET" th:action="${getWordsUri}">
             <button type="submit">
                 <h1>read words</h1>
             </button>
@@ -45,11 +45,11 @@
     </div>
     .............
     <div>
-        <form method="DELETE" th:action="${removeWordUri}">
+        <form method="POST" th:action="${removeWordUri}">
             <button type="submit">
                 <h1>delete word</h1>
             </button>
-            <input type="text" placeholder="word to delete">
+            <input name="wordToDelete" type="text" placeholder="word to delete">
         </form>
     </div>
 </div>

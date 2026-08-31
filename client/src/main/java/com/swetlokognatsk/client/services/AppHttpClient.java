@@ -43,6 +43,9 @@ public final class AppHttpClient {
             requestBuilder.header("Content-Type", "application/x-www-form-urlencoded");
             requestBuilder.POST(bodyPublisher);
             break;
+        case DELETE:
+            requestBuilder.DELETE();
+            break;
         default:
             throw new RuntimeException("unknown method: %s".formatted(method));
         }
@@ -51,10 +54,7 @@ public final class AppHttpClient {
 
         var request = requestBuilder.build();
 
-        var client = HttpClient.newBuilder()
-            .followRedirects(Redirect.NEVER)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+        var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
         var response = client.send(request, BodyHandlers.ofString());
         return response;
     }
@@ -196,7 +196,7 @@ public final class AppHttpClient {
     }
 
     public static void sendAddWordRequest(final AccessToken accessToken, final String newWord) throws IOException, InterruptedException {
-        var uri = ProtectedResource.getWordsListEndpoint();
+        var uri = ProtectedResource.getAddWordEndpoint();
 
         var headers = buildResourceHeaders(accessToken);
 
@@ -204,6 +204,15 @@ public final class AppHttpClient {
         body.put("newWord", newWord);
 
         var result = sendHttpRequest(POST, uri, headers, body);
+        bodyUnlessError(result);
+    }
+
+    public static void sendRemoveWordRequest(final AccessToken accessToken, final String wordToDelete) throws IOException, InterruptedException {
+        var uri = URIBuilder.buildRemoveWordUri(wordToDelete);
+
+        var headers = buildResourceHeaders(accessToken);
+
+        var result = sendHttpRequest(DELETE, uri, headers);
         bodyUnlessError(result);
     }
 

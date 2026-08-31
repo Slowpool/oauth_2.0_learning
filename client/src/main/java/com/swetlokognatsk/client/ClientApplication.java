@@ -31,6 +31,8 @@ import com.swetlokognatsk.client.services.AppHttpClient;
 import com.swetlokognatsk.client.services.Service;
 import com.swetlokognatsk.client.services.TokenParser;
 import com.swetlokognatsk.client.services.URIBuilder;
+
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,7 +59,7 @@ public class ClientApplication {
 
 	private static final String GET_WORDS_URI = "/words/get";
 	private static final String ADD_WORD_URI = "/words/add";
-	private static final String DELETE_WORD_URI = "/words/delete";
+	private static final String REMOVE_WORD_URI = "/words/delete";
 
 	private static ApplicationContext ctx;
 	private static final String SESSION_COOKIE = "CUSTOM_SESSION";
@@ -101,7 +103,7 @@ public class ClientApplication {
 
 		model.addAttribute("getWordsUri", GET_WORDS_URI);
 		model.addAttribute("addWordUri", ADD_WORD_URI);
-		model.addAttribute("removeWordUri", DELETE_WORD_URI);
+		model.addAttribute("removeWordUri", REMOVE_WORD_URI);
 
 		return new ModelAndView("home", model.asMap());
 	}
@@ -181,7 +183,7 @@ public class ClientApplication {
 	}
 
 	@GetMapping(GET_WORDS_URI)
-	public ResponseEntity<String> listWords(@CookieValue(SESSION_COOKIE) final String sessionId) {
+	public ResponseEntity<String> getWords(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var accessToken = getAccessToken(sessionId);
 		if (accessToken == null) {
 			return noAccessToken();
@@ -210,10 +212,19 @@ public class ClientApplication {
 		}
 	}
 
-	@DeleteMapping(DELETE_WORD_URI)
-	public ResponseEntity<String> deleteWord(@RequestBody final String wordToDelete) {
-		// TODO
-		return ResponseEntity.status(204).build();
+	@PostMapping(REMOVE_WORD_URI)
+	public ResponseEntity<String> removeWord(@CookieValue(SESSION_COOKIE) final String sessionId, @RequestParam final String wordToDelete) {
+		var accessToken = getAccessToken(sessionId);
+		if (accessToken == null) {
+			return noAccessToken();
+		}
+
+		try {
+			AppHttpClient.sendRemoveWordRequest(accessToken, wordToDelete);
+			return ResponseEntity.status(204).build();
+		} catch (IOException | InterruptedException e) {
+			return error("failed to remove word: %s".formatted(e.getMessage()));
+		}
 	}
 
 	private void updateRefreshToken(final String sessionId) throws IOException, InterruptedException {

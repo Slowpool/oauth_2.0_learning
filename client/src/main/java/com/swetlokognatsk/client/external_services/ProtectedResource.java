@@ -14,7 +14,7 @@ public final class ProtectedResource {
         return getWordsListEndpoint();
     }
 
-    public static String getDeleteWordEndpoint() {
+    public static String getRemoveWordEndpoint() {
         return getWordsListEndpoint();
     }
 

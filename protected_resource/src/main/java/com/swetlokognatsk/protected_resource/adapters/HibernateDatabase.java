@@ -9,6 +9,9 @@ import com.swetlokognatsk.protected_resource.models.AccessToken;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.ports.Database;
 
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+
 // TODO HibernateDatabase
 public final class HibernateDatabase implements Database {
 
@@ -40,12 +43,12 @@ public final class HibernateDatabase implements Database {
         return wordsDao.getWords();
     }
 
-    public void addWord(final String word) {
+    public void addWord(final String word) throws EntityExistsException {
         wordsDao.addWord(word);
     }
 
-    public void deleteWord(final String word) {
-        wordsDao.deleteWord(word);
+    public void removeWord(final String word) throws EntityNotFoundException {
+        wordsDao.removeWord(word);
     }
 
 }

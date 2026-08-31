@@ -5,6 +5,9 @@ import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.models.AccessToken;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+
 public interface Database {
 
     AccessToken findAccessToken(AccessTokenValue accessTokenValue) throws AccessTokenNotFoundException;
@@ -17,7 +20,7 @@ public interface Database {
 
     Set<String> getWords();
 
-    void addWord(String word);
+    void addWord(String word) throws EntityExistsException;
 
-    void deleteWord(String word);
+    void removeWord(String word) throws EntityNotFoundException;
 }
