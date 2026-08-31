@@ -38,11 +38,14 @@ public final class OAuthInterceptor implements HandlerInterceptor {
         boolean authIsSuccessful;
         if (accessTokenValue == null) {
             authIsSuccessful = false;
+            // TODO figure out what is this realm about
+            response.addHeader("WWW-Authenticate", "Bearer realm=protected-resource:8083");
             response.setStatus(400);
             response.getWriter().write("accessToken is not found in request");
         } else {
             var accessToken = new AccessTokenValue(accessTokenValue);
             try {
+                // TODO ensure it works fine when auth server is done
                 var requiredScopes = getRequiredScopes(request);
                 verifyAccessTokenAndScopes(accessToken, requiredScopes);
                 authIsSuccessful = true;

@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.swetlokognatsk.client.Client;
@@ -33,20 +34,20 @@ public final class AppHttpClient {
     private static HttpResponse<?> sendHttpRequest(final RequestMethod method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
         var requestBuilder = HttpRequest.newBuilder(URI.create(uri));
         switch (method) {
-            case GET:
-                requestBuilder.GET();
-                break;
-            case POST:
-                var bodyContent = mapBodyToString(body);
-                var bodyPublisher = BodyPublishers.ofString(bodyContent);
-                requestBuilder.POST(bodyPublisher);
-                break;
-            default:
-                throw new RuntimeException("unknown method: %s".formatted(method));
+        case GET:
+            requestBuilder.GET();
+            break;
+        case POST:
+            var bodyContent = mapBodyToString(body);
+            var bodyPublisher = BodyPublishers.ofString(bodyContent);
+            requestBuilder.POST(bodyPublisher);
+            break;
+        default:
+            throw new RuntimeException("unknown method: %s".formatted(method));
         }
 
         addHeaders(requestBuilder, headers);
-        
+
         var request = requestBuilder.build();
 
         var client = HttpClient.newBuilder().followRedirects(Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
@@ -58,7 +59,7 @@ public final class AppHttpClient {
         return sendHttpRequest(method, uri, headers, new HashMap<>());
     }
 
-    private static void addHeaders(final HttpRequest.Builder requestBuilder, final Map<String,String> headers) {
+    private static void addHeaders(final HttpRequest.Builder requestBuilder, final Map<String, String> headers) {
         for (var headerName : headers.keySet()) {
             requestBuilder.header(headerName, headers.get(headerName));
         }
@@ -90,7 +91,7 @@ public final class AppHttpClient {
         var uri = AuthorizationServer.getInternalTokenEndpoint();
 
         // TODO revise it later, on connecting all parts together
-        var headers = buildHeaders();
+        var headers = buildAuthHeaders();
 
         var body = new HashMap<String, String>();
         body.put("grant_type", "authorization_code");
@@ -124,7 +125,7 @@ public final class AppHttpClient {
         // }
     }
 
-    private static Map<String, String> buildHeaders() {
+    private static Map<String, String> buildAuthHeaders() {
         var headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         var credentials = encodeClientCredentials(Client.getId(), Client.getSecret());
@@ -133,7 +134,7 @@ public final class AppHttpClient {
     }
 
     public static String sendTokenRefreshingRequest(final RefreshToken refreshToken) throws IOException, InterruptedException {
-        var headers = buildHeaders();
+        var headers = buildAuthHeaders();
 
         var body = new HashMap<String, String>();
         body.put("grant_type", "refresh_token");
@@ -158,7 +159,7 @@ public final class AppHttpClient {
 
     private static boolean isFirstTry = true;
 
-    public static String fetchProtectedResource(final AccessToken token) throws IOException, InterruptedException {
+    public static String fetchProtectedResource(final AccessToken accessToken) throws IOException, InterruptedException {
         // // simulating the access token expiring
         // if (isFirstTry) {
         //     isFirstTry = false;
@@ -167,18 +168,35 @@ public final class AppHttpClient {
 
         var uri = ProtectedResource.getFetchResourceEndpoint();
 
-        var headers = new HashMap<String, String>();
-        // TODO what other types exist besides bearer?
-        var credentials = "Bearer %s".formatted(token.value);
-        headers.put("Authorization", credentials);
+        var headers = buildResourceHeaders(accessToken);
 
         var result = sendHttpRequest(GET, uri, headers);
+        return bodyUnlessError(result);
+    }
+
+    private static Map<String, String> buildResourceHeaders(final AccessToken accessToken) {
+        var headers = new HashMap<String, String>();
+        // TODO what other types exist besides bearer?
+        var credentials = "Bearer %s".formatted(accessToken.value);
+        headers.put("Authorization", credentials);
+        return headers;
+    }
+
+    public static String sendGetWordsRequest(final AccessToken accessToken) throws IOException, InterruptedException {
+        var uri = ProtectedResource.getWordsListEndpoint();
+
+        var headers = buildResourceHeaders(accessToken);
+        var result = sendHttpRequest(GET, uri, headers);
+
+        return bodyUnlessError(result);
+    }
+
+    private static String bodyUnlessError(final HttpResponse<?> result) throws IOException {
         var body = result.body();
         if (result.statusCode() >= 200 && result.statusCode() <= 299) {
             return (String) body;
         } else {
             throw new IOException("response code was wrong: %d. message: %s".formatted(result.statusCode(), body));
         }
-
     }
 }

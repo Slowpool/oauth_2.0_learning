@@ -21,4 +21,8 @@
 
    <include file="1788094532_add_scopes_table.xml" relativeToChangelogFile="true" />
 
+   <include file="1788163940_add_words_table.xml" relativeToChangelogFile="true" />
+
+   <include file="1788164717_add_auto_increment_to_words.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

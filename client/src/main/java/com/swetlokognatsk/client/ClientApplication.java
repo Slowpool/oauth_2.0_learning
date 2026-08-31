@@ -11,8 +11,11 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
@@ -37,6 +40,7 @@ import org.springframework.session.Session;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import static com.swetlokognatsk.client.model.TokenStrategy.*;
+import static org.springframework.http.ResponseEntity.ok;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @Controller
@@ -50,6 +54,10 @@ public class ClientApplication {
 
 	private static final String SING_IN_VIA_GIP_HUB_PATH = "/sing-in-via-gip-hub";
 	private static final String FETCH_PROTECTED_RESOURCE_PATH = "/fetch-protected-resource";
+
+	private static final String GET_WORDS_URI = "/words/get";
+	private static final String ADD_WORD_URI = "/words/add";
+	private static final String DELETE_WORD_URI = "/words/delete";
 
 	private static ApplicationContext ctx;
 	private static final String SESSION_COOKIE = "CUSTOM_SESSION";
@@ -91,6 +99,10 @@ public class ClientApplication {
 		model.addAttribute("getAuthEndpointUri", SING_IN_VIA_GIP_HUB_PATH);
 		model.addAttribute("askForProtectedResourceUri", FETCH_PROTECTED_RESOURCE_PATH);
 
+		model.addAttribute("getWordsUri", GET_WORDS_URI);
+		model.addAttribute("addWordUri", ADD_WORD_URI);
+		model.addAttribute("removeWordUri", DELETE_WORD_URI);
+
 		return new ModelAndView("home", model.asMap());
 	}
 
@@ -120,7 +132,7 @@ public class ClientApplication {
 		if (state.equals(sessionState)) {
 			removeState(sessionId);
 		} else {
-			return ResponseEntity.badRequest().body("state does not correspond. expected state: '%s', received state: '%s'".formatted(sessionState, state));
+			return badRequest("state does not correspond. expected state: '%s', received state: '%s'".formatted(sessionState, state));
 		}
 
 		try {
@@ -138,22 +150,21 @@ public class ClientApplication {
 			default:
 				throw new RuntimeException("unknown token: " + token);
 			}
-			return ResponseEntity.ok("token received. raw: %s, parsed: %s".formatted(rawJsonToken, token.toString()));
+			return ok("token received. raw: %s, parsed: %s".formatted(rawJsonToken, token.toString()));
 		} catch (IOException | InterruptedException e) {
 			var logger = LogFactory.getLog(getClass());
 			var message = "failed to get the token: %s".formatted(e.getMessage());
 			logger.info(message, e);
 			logger.error(message, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
+			return error(message);
 		}
 	}
 
 	@GetMapping(FETCH_PROTECTED_RESOURCE_PATH)
 	public ResponseEntity<?> fetchProtectedResource(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var accessToken = getAccessToken(sessionId);
-
 		if (accessToken == null) {
-			return ResponseEntity.badRequest().body("access token is not found in session");
+			return badRequest("access token is not found in session");
 		}
 
 		try {
@@ -162,12 +173,39 @@ public class ClientApplication {
 			// TODO ensure this scenario works
 			try {
 				return updateRefreshTokenAndFetchResourceAgain(sessionId);
-			}
-			catch (TokenStrategyDoesNotSupportRefreshTokenException innerE) {
+			} catch (TokenStrategyDoesNotSupportRefreshTokenException innerE) {
 				e.addSuppressed(innerE);
-				return ResponseEntity.internalServerError().body(e.getMessage());
+				return error(e.getMessage());
 			}
 		}
+	}
+
+	@GetMapping(GET_WORDS_URI)
+	public ResponseEntity<String> listWords(@CookieValue(SESSION_COOKIE) final String sessionId) {
+		var accessToken = getAccessToken(sessionId);
+		if (accessToken == null) {
+			return badRequest("access token is not found in session");
+		}
+
+		try {
+			var wordsString = AppHttpClient.sendGetWordsRequest(accessToken);
+			"obtained words: %s".formatted(wordsString);
+			return ok(wordsString);
+		} catch (IOException | InterruptedException e) {
+			return error("failed to obtain words: %s".formatted(e.getMessage()));
+		}
+	}
+
+	@PostMapping(ADD_WORD_URI)
+	public ResponseEntity<String> addWord(@RequestParam final String newWord) {
+		// TODO
+		return ResponseEntity.status(201).build();
+	}
+
+	@DeleteMapping(DELETE_WORD_URI)
+	public ResponseEntity<String> deleteWord(@RequestBody final String wordToDelete) {
+		// TODO
+		return ResponseEntity.status(204).build();
 	}
 
 	private void updateRefreshToken(final String sessionId) throws IOException, InterruptedException {
@@ -195,14 +233,14 @@ public class ClientApplication {
 			updateRefreshToken(sessionId);
 			return fetchProtectedResourceImpl(getAccessToken(sessionId));
 		} catch (IOException | InterruptedException innerE) {
-			return ResponseEntity.internalServerError().body("failed to update refreshToken: %s".formatted(innerE.getMessage()));
+			return error("failed to update refreshToken: %s".formatted(innerE.getMessage()));
 		}
 	}
 
 	private ResponseEntity<?> fetchProtectedResourceImpl(final AccessToken accessToken) throws IOException, InterruptedException {
 		var resource = AppHttpClient.fetchProtectedResource(accessToken);
 		var message = "successfully fetched: %s".formatted(resource);
-		return ResponseEntity.ok().body(message);
+		return ok(message);
 	}
 
 	private Session getSession(final String sessionId) {
@@ -314,6 +352,14 @@ public class ClientApplication {
 
 		saveSession(session);
 		return state;
+	}
+
+	private static ResponseEntity<String> error(final String message) {
+		return ResponseEntity.internalServerError().body(message);
+	}
+
+	private static ResponseEntity<String> badRequest(final String message) {
+		return ResponseEntity.badRequest().body(message);
 	}
 
 }

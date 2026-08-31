@@ -7,10 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.swetlokognatsk.protected_resource.ports.Database;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+// TODO what is `nextval('words_id_seq'::regclass)`???
+// Column |          Type          | Collation | Nullable |              Default              
+// --------+------------------------+-----------+----------+-----------------------------------
+// id     | integer                |           | not null | nextval('words_id_seq'::regclass)
 
 // TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication
@@ -45,7 +51,7 @@ public class ProtectedResourceApplication {
 	}
 
 	@PostMapping("/words")
-	public ResponseEntity<String> addWord(@RequestBody final String newWord) {
+	public ResponseEntity<String> addWord(@RequestParam final String newWord) {
 		var db = getDatabase();
 		db.addWord(newWord);
 		return ResponseEntity.status(201).build();

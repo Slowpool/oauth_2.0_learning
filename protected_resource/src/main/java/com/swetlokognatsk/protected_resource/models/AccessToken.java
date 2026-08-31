@@ -14,6 +14,7 @@ public final class AccessToken {
     @AttributeOverride(name = "value", column = @Column(name = "access_token", nullable = false))
     private AccessTokenValue value;
 
+    // TODO why there's no session at the moment of accessing it
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(inverseJoinColumns = @JoinColumn(name = "scope_id"))
     private Set<ScopeEntity> scopes;

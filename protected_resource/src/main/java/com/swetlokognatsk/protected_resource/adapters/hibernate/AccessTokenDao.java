@@ -32,6 +32,5 @@ public final class AccessTokenDao {
         catch (NoResultException e) {
             throw new AccessTokenNotFoundException();
         }
-        
     }
 }

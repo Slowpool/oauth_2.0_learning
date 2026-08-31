@@ -2,8 +2,9 @@ package com.swetlokognatsk.protected_resource.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.swetlokognatsk.protected_resource.adapters.HibernatePostgresqlDatabase;
+import com.swetlokognatsk.protected_resource.adapters.HibernateDatabase;
 import com.swetlokognatsk.protected_resource.adapters.hibernate.AccessTokenDao;
+import com.swetlokognatsk.protected_resource.adapters.hibernate.WordsDao;
 import com.swetlokognatsk.protected_resource.ports.Database;
 import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
 
@@ -11,14 +12,18 @@ import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
 class AppConfig {
 
     @Bean
-    // TODO it's package-private because it's accessed via reflection?
     AccessTokenDao getAccessTokenDao() {
         return new AccessTokenDao();
     }
 
     @Bean
-    Database getDatabase(final AccessTokenDao accessTokenDao) {
-        return new HibernatePostgresqlDatabase(accessTokenDao);
+    WordsDao getWordsDao() {
+        return new WordsDao();
+    }
+
+    @Bean
+    Database getDatabase(final AccessTokenDao accessTokenDao, final WordsDao wordsDao) {
+        return new HibernateDatabase(accessTokenDao, wordsDao);
     }
 
     @Bean
