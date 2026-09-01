@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 // TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication
+@EntityScan(basePackages = {"com.swetlokognatsk.protected_resource", "com.swetlokognatsk.oauth_db.models" })
 @RestController
 public class ProtectedResourceApplication {
 
