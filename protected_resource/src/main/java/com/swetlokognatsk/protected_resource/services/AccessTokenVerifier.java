@@ -3,13 +3,13 @@ package com.swetlokognatsk.protected_resource.services;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.swetlokognatsk.oauth_db.models.AccessToken;
+import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
+import com.swetlokognatsk.oauth_db.models.Scopes;
+import com.swetlokognatsk.oauth_db.models.ScopesSet;
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.RequiredScopesAreNotGrantedException;
-import com.swetlokognatsk.protected_resource.models.AccessToken;
-import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
-import com.swetlokognatsk.protected_resource.models.ScopeEntity;
-import com.swetlokognatsk.protected_resource.models.Scopes;
-import com.swetlokognatsk.protected_resource.models.ScopesSet;
 import com.swetlokognatsk.protected_resource.ports.Database;
 
 public final class AccessTokenVerifier {

@@ -2,11 +2,13 @@ package com.swetlokognatsk.protected_resource.adapters;
 
 import java.util.HashSet;
 import java.util.Set;
+
+
+import com.swetlokognatsk.oauth_db.models.AccessToken;
+import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.AccessTokenDao;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.WordsDao;
-import com.swetlokognatsk.protected_resource.models.AccessToken;
-import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.ports.Database;
 
 import jakarta.persistence.EntityExistsException;

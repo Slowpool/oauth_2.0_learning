@@ -1,4 +1,4 @@
-package com.swetlokognatsk.protected_resource.models;
+package com.swetlokognatsk.oauth_db.models;
 
 import java.util.Set;
 import jakarta.persistence.*;

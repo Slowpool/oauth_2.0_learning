@@ -1,8 +1,9 @@
 package com.swetlokognatsk.protected_resource.adapters.jakarta;
 
+import com.swetlokognatsk.oauth_db.models.AccessToken;
+import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
-import com.swetlokognatsk.protected_resource.models.AccessToken;
-import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;

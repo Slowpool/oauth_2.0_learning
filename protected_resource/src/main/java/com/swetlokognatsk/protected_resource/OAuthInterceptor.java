@@ -2,9 +2,10 @@ package com.swetlokognatsk.protected_resource;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
-import com.swetlokognatsk.protected_resource.models.Scopes;
-import com.swetlokognatsk.protected_resource.models.ScopesSet;
+
+import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
+import com.swetlokognatsk.oauth_db.models.Scopes;
+import com.swetlokognatsk.oauth_db.models.ScopesSet;
 import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -90,6 +90,12 @@
 			<artifactId>spring-boot-starter-liquibase</artifactId>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.swetlokognatsk</groupId>
+			<artifactId>oauth_db</artifactId>
+			<version>0.0.1</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
