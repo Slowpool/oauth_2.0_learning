@@ -1,7 +1,6 @@
 package com.swetlokognatsk.protected_resource;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import com.swetlokognatsk.protected_resource.models.AccessTokenValue;
 import com.swetlokognatsk.protected_resource.models.Scopes;
@@ -11,7 +10,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import static com.swetlokognatsk.protected_resource.services.AuthHeaderHelper.*;
 import java.io.IOException;
-import java.util.Set;
 
 @Component
 public final class OAuthInterceptor implements HandlerInterceptor {

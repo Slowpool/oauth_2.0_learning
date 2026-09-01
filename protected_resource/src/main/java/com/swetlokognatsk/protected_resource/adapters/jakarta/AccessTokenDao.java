@@ -1,4 +1,4 @@
-package com.swetlokognatsk.protected_resource.adapters.hibernate;
+package com.swetlokognatsk.protected_resource.adapters.jakarta;
 
 import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.models.AccessToken;

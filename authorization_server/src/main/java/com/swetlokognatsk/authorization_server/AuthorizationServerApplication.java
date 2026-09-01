@@ -2,21 +2,22 @@ package com.swetlokognatsk.authorization_server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+@SpringBootApplication
 @RestController
 public class AuthorizationServerApplication {
 
+	private static ApplicationContext ctx;
+
 	public static void main(String[] args) {
-		SpringApplication.run(AuthorizationServerApplication.class, args);
+		ctx = SpringApplication.run(AuthorizationServerApplication.class, args);
 	}
 
 	@RequestMapping("/")
 	public String home() {
-		// TODO how to make debugging work
 		return "<h1>Hello AuthorizationServerApplication</h1>";
 	}
 

@@ -44,6 +44,7 @@ import org.springframework.ui.Model;
 import static com.swetlokognatsk.client.model.TokenStrategy.*;
 import static org.springframework.http.ResponseEntity.ok;
 
+// TODO add user authentication on auth server. with password hash? then add user_id to acces_token (or to refresh token), then add user_id to words and filter words by that user_id
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @Controller
 public class ClientApplication {

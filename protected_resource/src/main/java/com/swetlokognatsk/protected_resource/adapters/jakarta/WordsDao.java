@@ -1,14 +1,12 @@
-package com.swetlokognatsk.protected_resource.adapters.hibernate;
+package com.swetlokognatsk.protected_resource.adapters.jakarta;
 
 import java.util.HashSet;
 import java.util.Set;
 import com.swetlokognatsk.protected_resource.models.Word;
-
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
-
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +27,7 @@ public class WordsDao {
         var wordEntity = new Word(word);
         try {
             entityManager.persist(wordEntity);
-        }
-        catch (ConstraintViolationException e) {
+        } catch (ConstraintViolationException e) {
             throw new EntityExistsException();
         }
     }
