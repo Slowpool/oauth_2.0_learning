@@ -2,8 +2,8 @@ package com.swetlokognatsk.protected_resource.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.swetlokognatsk.protected_resource.adapters.HibernateDatabase;
-import com.swetlokognatsk.protected_resource.adapters.jakarta.AccessTokenDao;
+import com.swetlokognatsk.protected_resource.adapters.DaoDatabase;
+import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.WordsDao;
 import com.swetlokognatsk.protected_resource.ports.Database;
 import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
@@ -23,7 +23,7 @@ class AppConfig {
 
     @Bean
     Database getDatabase(final AccessTokenDao accessTokenDao, final WordsDao wordsDao) {
-        return new HibernateDatabase(accessTokenDao, wordsDao);
+        return new DaoDatabase(accessTokenDao, wordsDao);
     }
 
     @Bean

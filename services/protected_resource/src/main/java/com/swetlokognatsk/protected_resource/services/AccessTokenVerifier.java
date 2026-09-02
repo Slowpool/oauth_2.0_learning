@@ -8,7 +8,7 @@ import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 import com.swetlokognatsk.oauth_db.models.ScopeEntity;
 import com.swetlokognatsk.oauth_db.models.Scopes;
 import com.swetlokognatsk.oauth_db.models.ScopesSet;
-import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
+import com.swetlokognatsk.oauth_db.AccessTokenNotFoundException;
 import com.swetlokognatsk.protected_resource.RequiredScopesAreNotGrantedException;
 import com.swetlokognatsk.protected_resource.ports.Database;
 

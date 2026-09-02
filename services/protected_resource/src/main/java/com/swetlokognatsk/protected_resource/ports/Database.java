@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
-import com.swetlokognatsk.protected_resource.AccessTokenNotFoundException;
+import com.swetlokognatsk.oauth_db.AccessTokenNotFoundException;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;

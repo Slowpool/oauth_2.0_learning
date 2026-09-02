@@ -1,1 +1,0 @@
-CREATE TABLE `access_tokens` (VARCHAR(64) `value`);
