@@ -2,7 +2,8 @@ package com.swetlokognatsk.authorization_server.daos;
 
 import java.util.List;
 import org.springframework.stereotype.Repository;
-import com.swetlokognatsk.authorization_server.ClientNotFoundException;
+
+import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.models.Client;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;

@@ -8,12 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
+import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
+import com.swetlokognatsk.authorization_server.exceptions.InvalidRedirectUriException;
 import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.models.RedirectUri;
 import com.swetlokognatsk.authorization_server.ports.Database;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
 
 // TODO create all base scenarios in oauth and write logs from each service in demonstration purposes
 @SpringBootApplication

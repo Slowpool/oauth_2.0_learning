@@ -56,8 +56,22 @@ services:
       - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
     volumes:
       - pg_db:/var/lib/postgresql
+
+  redis:
+    container_name:
+      'oauth_redis'
+    image: 'redis:8.8.2'
+    restart: no
+    volumes:
+      - './redis/redis.conf:/usr/local/etc/redis/redis.conf'
+      - 'redis_data:/data'
     ports:
-      - '5432'
+      - "6379:6379"
+    command: >
+      redis-server
+      /usr/local/etc/redis/redis.conf
+
 
 volumes:
   pg_db:
+  redis_data:
