@@ -25,4 +25,6 @@
 
    <include file="1788164717_add_auto_increment_to_words.xml" relativeToChangelogFile="true" />
 
+   <include file="1788333965_add_redirect_uris_table.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

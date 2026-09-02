@@ -1,0 +1,35 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="10" author="slowpool">
+        <createTable tableName="redirect_uris">
+            <column name="id" type="int">
+                <constraints primaryKey="true" />
+            </column>
+            <column name="client_id" type="int">
+                <constraints nullable="false" />
+            </column>
+            <column name="uri" type="varchar(256)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+            constraintName="redirect_uris_uq_client_id_and_uri"
+            tableName="redirect_uris"
+            columnNames="client_id, uri"
+        />
+
+        <addForeignKeyConstraint
+            constraintName="redirect_uris_client_id"
+            baseTableName="redirect_uris"
+            baseColumnNames="client_id"
+            referencedTableName="clients"
+            referencedColumnNames="id"
+            onUpdate="CASCADE"
+            onDelete="CASCADE"
+        />
+    </changeSet>
+
+</databaseChangeLog>
