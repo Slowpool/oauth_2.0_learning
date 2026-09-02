@@ -1,7 +1,6 @@
 package com.swetlokognatsk.protected_resource;
 
 import java.util.Map;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
@@ -14,10 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.swetlokognatsk.protected_resource.ports.Database;
-
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -28,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 // TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication
-@EntityScan(basePackages = {"com.swetlokognatsk.protected_resource", "com.swetlokognatsk.oauth_db.models" })
+@EntityScan(basePackages = { "com.swetlokognatsk.protected_resource", "com.swetlokognatsk.oauth_db.models" })
 @RestController
 public class ProtectedResourceApplication {
 
@@ -66,8 +63,7 @@ public class ProtectedResourceApplication {
 		try {
 			db.addWord(newWord);
 			return ResponseEntity.status(201).build();
-		}
-		catch(EntityExistsException e) {
+		} catch (EntityExistsException e) {
 			return ResponseEntity.status(409).build();
 		}
 	}
@@ -77,8 +73,7 @@ public class ProtectedResourceApplication {
 		var db = getDatabase();
 		try {
 			db.removeWord(wordToDelete);
-		}
-		catch (EntityNotFoundException e) {
+		} catch (EntityNotFoundException e) {
 			return ResponseEntity.notFound().build();
 		}
 		return ResponseEntity.status(204).build();
