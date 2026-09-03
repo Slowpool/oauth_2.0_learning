@@ -33,4 +33,7 @@ public class JpaDatabase implements Database {
         return authorizationRequestsRepository.findByKey(key);
     }
 
+    public AuthorizationRequest popAuthorizationRequest(final String key) throws AuthorizationRequestNotFoundException {
+        return authorizationRequestsRepository.popByKey(key);
+    }
 }

@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
+import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidRedirectUriException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
@@ -37,9 +38,14 @@ public class AuthorizationServerApplication {
 	private static final String DENY_AUTH_ENDPOINT = "/deny-authorization";
 
 	private static ApplicationContext ctx;
+	private final Database database;
 
 	public static void main(String[] args) {
 		ctx = SpringApplication.run(AuthorizationServerApplication.class, args);
+	}
+
+	public AuthorizationServerApplication(final Database database) {
+		this.database = database;
 	}
 
 	@RequestMapping(HOME)
@@ -49,7 +55,6 @@ public class AuthorizationServerApplication {
 
 	@GetMapping(AUTHORIZATION_ENDPOINT)
 	public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, final Model model) {
-		var database = ctx.getBean(Database.class);
 
 		String view;
 
@@ -78,12 +83,28 @@ public class AuthorizationServerApplication {
 
 	@PostMapping(APPROVE_AUTH_ENDPOINT)
 	public ResponseEntity<?> approveAuthorization(@RequestParam final String requestId) {
-		return ResponseEntity.ok("approveAuthorization, requestId: %s".formatted(requestId));
+		try {
+			validateRequestId(requestId);
+			var authorizationRequest = database.popAuthorizationRequest(requestId);
+			return ResponseEntity.ok("approveAuthorization, requestId: %s".formatted(requestId));
+		} catch (AuthorizationRequestNotFoundException e) {
+			return ResponseEntity.status(UNPROCESSABLE_CONTENT.value()).body("No matching authorization request");
+		}
 	}
 
 	@PostMapping(DENY_AUTH_ENDPOINT)
 	public ResponseEntity<?> denyAuthorization(@RequestParam final String requestId) {
-		return ResponseEntity.ok("denyAuthorization, requestId: %s".formatted(requestId));
+		try {
+			validateRequestId(requestId);
+			var authorizationRequest = database.popAuthorizationRequest(requestId);
+			return ResponseEntity.ok("denyAuthorization, requestId: %s".formatted(requestId));
+		} catch (AuthorizationRequestNotFoundException e) {
+			return ResponseEntity.status(UNPROCESSABLE_CONTENT.value()).body("No matching authorization request");
+		}
+	}
+
+	private void validateRequestId(final String requestId) throws AuthorizationRequestNotFoundException {
+		database.getAuthorizationRequest(requestId);
 	}
 
 	/**
@@ -116,7 +137,6 @@ public class AuthorizationServerApplication {
 
 	@RequestMapping("/clients-test2")
 	public String clientsTest2() {
-		var database = ctx.getBean(Database.class);
 		try {
 			var client = database.getClient("client-1");
 			return "done";

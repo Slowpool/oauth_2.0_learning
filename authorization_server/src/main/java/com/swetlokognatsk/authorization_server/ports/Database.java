@@ -11,4 +11,6 @@ public interface Database {
     void saveAuthorizationRequest(AuthorizationRequest authorizationRequest);
 
     AuthorizationRequest getAuthorizationRequest(String key) throws AuthorizationRequestNotFoundException;
+
+    AuthorizationRequest popAuthorizationRequest(String key) throws AuthorizationRequestNotFoundException;
 }

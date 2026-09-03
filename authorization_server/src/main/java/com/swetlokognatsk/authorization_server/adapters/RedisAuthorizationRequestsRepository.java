@@ -27,7 +27,17 @@ public class RedisAuthorizationRequestsRepository implements AuthorizationReques
 
     public AuthorizationRequest findByKey(final String key) throws AuthorizationRequestNotFoundException {
         var serializedRequest = redisTemplate.opsForValue().get(key);
+        if (serializedRequest == null) {
+            throw new AuthorizationRequestNotFoundException();
+        }
         return serializer.deserializeAuthorizationRequest(serializedRequest);
     }
 
+    public AuthorizationRequest popByKey(final String key) throws AuthorizationRequestNotFoundException {
+        var serializedRequest = redisTemplate.opsForValue().getAndDelete(key);
+        if (serializedRequest == null) {
+            throw new AuthorizationRequestNotFoundException();
+        }
+        return serializer.deserializeAuthorizationRequest(serializedRequest);
+    }
 }

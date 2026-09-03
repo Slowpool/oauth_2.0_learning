@@ -8,4 +8,6 @@ public interface AuthorizationRequestsRepository {
 
     AuthorizationRequest findByKey(String key) throws AuthorizationRequestNotFoundException;
 
+    AuthorizationRequest popByKey(String key) throws AuthorizationRequestNotFoundException;
+
 }
