@@ -21,15 +21,15 @@ public class JpaDatabase implements Database {
         this.authorizationRequestsRepository = authorizationRequestsRepository;
     }
 
-    public Client getClient(String clientId) throws ClientNotFoundException {
+    public Client getClient(final String clientId) throws ClientNotFoundException {
         return clientsDao.findByClientId(clientId);
     }
 
-    public void saveAuthorizationRequest(AuthorizationRequest authorizationRequest) {
+    public void saveAuthorizationRequest(final AuthorizationRequest authorizationRequest) {
         authorizationRequestsRepository.save(authorizationRequest);
     }
 
-    public AuthorizationRequest getAuthorizationRequest(String key) throws AuthorizationRequestNotFoundException {
+    public AuthorizationRequest getAuthorizationRequest(final String key) throws AuthorizationRequestNotFoundException {
         return authorizationRequestsRepository.findByKey(key);
     }
 

@@ -5,26 +5,29 @@ import org.springframework.stereotype.Repository;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
+import com.swetlokognatsk.authorization_server.ports.JsonSerializer;
 
 @Repository
 public class RedisAuthorizationRequestsRepository implements AuthorizationRequestsRepository {
 
     private final StringRedisTemplate redisTemplate;
+    private final JsonSerializer serializer;
 
-    // TODO why template?
-    public RedisAuthorizationRequestsRepository(final StringRedisTemplate redisTemplate) {
+    // TODO why it's called template?
+    public RedisAuthorizationRequestsRepository(final StringRedisTemplate redisTemplate, final JsonSerializer serializer) {
         this.redisTemplate = redisTemplate;
+        this.serializer = serializer;
     }
 
-    public void save(AuthorizationRequest authorizationRequest) {
-        // TODO RedisAuthorizationRequestsRepository
-        // redisTemplate.();
+    public void save(final AuthorizationRequest authorizationRequest) {
+        var serializedRequest = serializer.serializeAuthorizationRequest(authorizationRequest);
+        // TODO why such a weird interface (.opsForValue())?
+        redisTemplate.opsForValue().set(authorizationRequest.id(), serializedRequest);
     }
 
     public AuthorizationRequest findByKey(final String key) throws AuthorizationRequestNotFoundException {
-        // TODO RedisAuthorizationRequestsRepository
-        return null;
-        // redisTemplate.
+        var serializedRequest = redisTemplate.opsForValue().get(key);
+        return serializer.deserializeAuthorizationRequest(serializedRequest);
     }
 
 }
