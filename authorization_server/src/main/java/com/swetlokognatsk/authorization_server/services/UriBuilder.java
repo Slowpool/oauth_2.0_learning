@@ -32,15 +32,29 @@ public class UriBuilder {
 
     public static String buildRedirectUriOnAccessDenied(final AuthorizationRequest authorizationRequest) {
         var baseUri = authorizationRequest.redirectUri();
+
         var options = newOptions();
         options.put("error", "access_denied");
+
         return buildURI(baseUri, options, null, false);
     }
 
     public static String buildRedirectUriOnUnsupportedResponseType(final AuthorizationRequest authorizationRequest) {
         var baseUri = authorizationRequest.redirectUri();
+
         var options = newOptions();
         options.put("error", "unsupported_response_type");
+
+        return buildURI(baseUri, options, null, false);
+    }
+
+    public static String buildRedirectUriOnSuccess(final String code, final AuthorizationRequest authorizationRequest) {
+        var baseUri = authorizationRequest.redirectUri();
+
+        var options = newOptions();
+        options.put("code", code);
+        options.put("state", authorizationRequest.state());
+
         return buildURI(baseUri, options, null, false);
     }
 }

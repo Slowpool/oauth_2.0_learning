@@ -58,14 +58,14 @@ public class AuthorizationServerApplication {
 	}
 
 	@GetMapping(AUTHORIZATION_ENDPOINT)
-	public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, final Model model) {
+	public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam(name = "state") final String state, final Model model) {
 
 		String view;
 
 		try {
 			var client = database.getClient(clientId);
 			validateClient(client, redirectUri);
-			var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType);
+			var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType, state);
 			model.addAttribute("requestId", requestId);
 			model.addAttribute("clientId", clientId);
 			model.addAttribute("redirectUri", redirectUri);
@@ -101,7 +101,8 @@ public class AuthorizationServerApplication {
 
 			var code = generateCode();
 			saveAuthorizationCode(requestId, code);
-			redirectUri = "";
+
+			redirectUri = UriBuilder.buildRedirectUriOnSuccess(code, authorizationRequest);
 		} catch (UnsupportedResponseTypeException e) {
 			// TODO how client should react to it?
 			redirectUri = UriBuilder.buildRedirectUriOnUnsupportedResponseType(authorizationRequest);
@@ -118,6 +119,7 @@ public class AuthorizationServerApplication {
 	private static String generateCode() {
 		return UUID.randomUUID().toString().replace("-", "");
 	}
+
 	private void validateResponseType(final String responseType) throws UnsupportedResponseTypeException {
 		switch (responseType) {
 		case "code":
@@ -159,9 +161,9 @@ public class AuthorizationServerApplication {
 	/**
 	 * @return String requestId
 	 */
-	private String saveAuthorizationRequest(final Database database, final String clientId, final String redirectUri, final String responseType) {
+	private String saveAuthorizationRequest(final Database database, final String clientId, final String redirectUri, final String responseType, final String state) {
 		String requestId = UUID.randomUUID().toString();
-		var authorizationRequest = new AuthorizationRequest(requestId, clientId, redirectUri, responseType);
+		var authorizationRequest = new AuthorizationRequest(requestId, clientId, redirectUri, responseType, state);
 		database.saveAuthorizationRequest(authorizationRequest);
 		return requestId;
 	}
