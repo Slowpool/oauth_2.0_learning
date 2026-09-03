@@ -6,10 +6,11 @@ public final class Client {
     }
 
     public static String getId() {
-        return "CLIENT_ID_1";
+        return "client-1";
     }
 
     public static String getSecret() {
+        // TODO getSecret
         return "CLIENT_SECRET_1";
     }
 

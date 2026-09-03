@@ -1,6 +1,6 @@
 package com.swetlokognatsk.client;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -97,5 +97,23 @@ class ClientApplicationTests {
 		var strippedString = someString.trim();
 
 		assertEquals("bazinga", strippedString);
+	}
+
+	@Test
+	public void encodingTest10() {
+		var uri = "http%3A%2F%2Flocalhost%3A1939%2Fcallback";
+		var builder = UriComponentsBuilder.fromUriString("http://some-uri");
+		builder.queryParam("redirect_uri", uri);
+		var authUri = builder.build().toUriString();
+		assertEquals("http://some-uri?redirect_uri=http%3A%2F%2Flocalhost%3A1939%2Fcallback", authUri);
+	}
+
+	@Test
+	public void encodingTest11() {
+		var uri = "http%3A%2F%2Flocalhost%3A1939%2Fcallback";
+		var builder = UriComponentsBuilder.fromUriString("http://some-uri");
+		builder.queryParam("redirect_uri", uri);
+		var authUri = builder.toUriString();
+		assertEquals("http://some-uri?redirect_uri=http%3A%2F%2Flocalhost%3A1939%2Fcallback", authUri);
 	}
 }

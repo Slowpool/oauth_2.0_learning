@@ -28,7 +28,7 @@ public class URIBuilder {
             uri.encode();
         }
 
-        return uri.toUriString();
+        return uri.build(encode).toUriString();
     }
 
     public static String buildAuthorizationURI(final String state) {
