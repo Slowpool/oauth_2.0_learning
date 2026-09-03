@@ -1,6 +1,8 @@
 package com.swetlokognatsk.authorization_server.adapters;
 
 import org.springframework.stereotype.Component;
+
+import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.ports.JsonSerializer;
 import tools.jackson.databind.ObjectMapper;
@@ -22,4 +24,10 @@ public class JacksonJsonSerializer implements JsonSerializer {
     public AuthorizationRequest deserializeAuthorizationRequest(final String authorizationRequestJson) {
         return objectMapper.readValue(authorizationRequestJson, AuthorizationRequest.class);
     }
+
+    public String serializeAuthorizationCode(AuthorizationCode authorizationCode) {
+        return objectMapper.writeValueAsString(authorizationCode);
+    }
+
+    
 }

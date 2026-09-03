@@ -12,14 +12,18 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidRedirectUriException;
+import com.swetlokognatsk.authorization_server.exceptions.UnsupportedResponseTypeException;
+import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.models.RedirectUri;
 import com.swetlokognatsk.authorization_server.ports.Database;
+import com.swetlokognatsk.authorization_server.services.UriBuilder;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,15 +58,14 @@ public class AuthorizationServerApplication {
 	}
 
 	@GetMapping(AUTHORIZATION_ENDPOINT)
-	public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, final Model model) {
+	public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, final Model model) {
 
 		String view;
 
 		try {
 			var client = database.getClient(clientId);
-			validateClient(client, redirectUri);//, clientSecret);
-			var requestId = saveAuthorizationRequest(database, clientId, redirectUri);
-			//clientId, requestId));
+			validateClient(client, redirectUri);
+			var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType);
 			model.addAttribute("requestId", requestId);
 			model.addAttribute("clientId", clientId);
 			model.addAttribute("redirectUri", redirectUri);
@@ -82,24 +85,70 @@ public class AuthorizationServerApplication {
 	}
 
 	@PostMapping(APPROVE_AUTH_ENDPOINT)
-	public ResponseEntity<?> approveAuthorization(@RequestParam final String requestId) {
+	public RedirectView approveAuthorization(final HttpServletResponse response, @RequestParam final String requestId) {
+		AuthorizationRequest authorizationRequest;
 		try {
 			validateRequestId(requestId);
-			var authorizationRequest = database.popAuthorizationRequest(requestId);
-			return ResponseEntity.ok("approveAuthorization, requestId: %s".formatted(requestId));
+			authorizationRequest = database.popAuthorizationRequest(requestId);
 		} catch (AuthorizationRequestNotFoundException e) {
-			return ResponseEntity.status(UNPROCESSABLE_CONTENT.value()).body("No matching authorization request");
+			sendErrorDirectlyToUser(e, response, UNPROCESSABLE_CONTENT.value(), "No matching authorization request");
+			return null;
+		}
+
+		String redirectUri;
+		try {
+			validateResponseType(authorizationRequest.responseType());
+
+			var code = generateCode();
+			saveAuthorizationCode(requestId, code);
+			redirectUri = "";
+		} catch (UnsupportedResponseTypeException e) {
+			// TODO how client should react to it?
+			redirectUri = UriBuilder.buildRedirectUriOnUnsupportedResponseType(authorizationRequest);
+		}
+
+		return new RedirectView(redirectUri);
+	}
+
+	private void saveAuthorizationCode(final String requestId, final String code) {
+		var authorizationCode = new AuthorizationCode(requestId, code);
+		database.saveAuthorizationCode(authorizationCode);
+	}
+
+	private static String generateCode() {
+		return UUID.randomUUID().toString().replace("-", "");
+	}
+	private void validateResponseType(final String responseType) throws UnsupportedResponseTypeException {
+		switch (responseType) {
+		case "code":
+			break;
+		default:
+			throw new UnsupportedResponseTypeException();
 		}
 	}
 
 	@PostMapping(DENY_AUTH_ENDPOINT)
-	public ResponseEntity<?> denyAuthorization(@RequestParam final String requestId) {
+	public RedirectView denyAuthorization(final HttpServletResponse response, @RequestParam final String requestId) {
 		try {
 			validateRequestId(requestId);
 			var authorizationRequest = database.popAuthorizationRequest(requestId);
-			return ResponseEntity.ok("denyAuthorization, requestId: %s".formatted(requestId));
+			// TODO eliminate UriBuilder and use RedirectView attributes instead
+			// TODO how client should react to it?
+			var redirectUri = UriBuilder.buildRedirectUriOnAccessDenied(authorizationRequest);
+			return new RedirectView(redirectUri);
 		} catch (AuthorizationRequestNotFoundException e) {
-			return ResponseEntity.status(UNPROCESSABLE_CONTENT.value()).body("No matching authorization request");
+			sendErrorDirectlyToUser(e, response, UNPROCESSABLE_CONTENT.value(), "No matching authorization request");
+			return null;
+		}
+	}
+
+	// sends the error not via front channel
+	private void sendErrorDirectlyToUser(final AuthorizationRequestNotFoundException e, final HttpServletResponse response, final int status, final String message) {
+		response.setStatus(status);
+		try {
+			response.getWriter().write(message);
+		} catch (Throwable innerE) {
+			e.addSuppressed(innerE);
 		}
 	}
 
@@ -110,9 +159,9 @@ public class AuthorizationServerApplication {
 	/**
 	 * @return String requestId
 	 */
-	private String saveAuthorizationRequest(final Database database, final String clientId, final String redirectUri) {
+	private String saveAuthorizationRequest(final Database database, final String clientId, final String redirectUri, final String responseType) {
 		String requestId = UUID.randomUUID().toString();
-		var authorizationRequest = new AuthorizationRequest(requestId, clientId, redirectUri);
+		var authorizationRequest = new AuthorizationRequest(requestId, clientId, redirectUri, responseType);
 		database.saveAuthorizationRequest(authorizationRequest);
 		return requestId;
 	}

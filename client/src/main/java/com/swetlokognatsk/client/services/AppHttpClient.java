@@ -208,7 +208,7 @@ public final class AppHttpClient {
     }
 
     public static void sendRemoveWordRequest(final AccessToken accessToken, final String wordToDelete) throws IOException, InterruptedException {
-        var uri = URIBuilder.buildRemoveWordUri(wordToDelete);
+        var uri = UriBuilder.buildRemoveWordUri(wordToDelete);
 
         var headers = buildResourceHeaders(accessToken);
 

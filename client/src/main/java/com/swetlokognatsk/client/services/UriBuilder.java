@@ -11,7 +11,7 @@ import com.swetlokognatsk.client.Client;
 import com.swetlokognatsk.client.external_services.AuthorizationServer;
 import com.swetlokognatsk.client.external_services.ProtectedResource;
 
-public class URIBuilder {
+public class UriBuilder {
 
     private static String buildURI(final String base, final Map<String, String> options, final String hash, final boolean encode) {
         var uri = UriComponentsBuilder.fromUriString(base);

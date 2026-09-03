@@ -30,7 +30,7 @@ import com.swetlokognatsk.client.model.TokenStrategy;
 import com.swetlokognatsk.client.services.AppHttpClient;
 import com.swetlokognatsk.client.services.Service;
 import com.swetlokognatsk.client.services.TokenParser;
-import com.swetlokognatsk.client.services.URIBuilder;
+import com.swetlokognatsk.client.services.UriBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
@@ -124,7 +124,7 @@ public class ClientApplication {
 	public RedirectView singInViaGipHub(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var state = createStateAndWriteToSession(sessionId);
 
-		var authEndpointURI = URIBuilder.buildAuthorizationURI(state);
+		var authEndpointURI = UriBuilder.buildAuthorizationURI(state);
 		var redirect = new RedirectView(authEndpointURI);
 		return redirect;
 	}

@@ -6,8 +6,8 @@ import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 public interface AuthorizationRequestsRepository {
     void save(AuthorizationRequest authorizationRequest);
 
-    AuthorizationRequest findByKey(String key) throws AuthorizationRequestNotFoundException;
+    AuthorizationRequest findByRequestId(String key) throws AuthorizationRequestNotFoundException;
 
-    AuthorizationRequest popByKey(String key) throws AuthorizationRequestNotFoundException;
+    AuthorizationRequest popByRequestId(String key) throws AuthorizationRequestNotFoundException;
 
 }

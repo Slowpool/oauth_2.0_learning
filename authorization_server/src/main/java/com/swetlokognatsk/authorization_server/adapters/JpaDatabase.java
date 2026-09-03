@@ -1,12 +1,13 @@
 package com.swetlokognatsk.authorization_server.adapters;
 
 import org.springframework.stereotype.Repository;
-
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
+import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.models.Client;
+import com.swetlokognatsk.authorization_server.ports.AuthorizationCodesRepository;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
 import com.swetlokognatsk.authorization_server.ports.Database;
 
@@ -15,10 +16,12 @@ public class JpaDatabase implements Database {
 
     private final ClientsDao clientsDao;
     private final AuthorizationRequestsRepository authorizationRequestsRepository;
+    private final AuthorizationCodesRepository authorizationCodesRepository;
 
-    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository) {
+    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository) {
         this.clientsDao = clientsDao;
         this.authorizationRequestsRepository = authorizationRequestsRepository;
+        this.authorizationCodesRepository = authorizationCodesRepository;
     }
 
     public Client getClient(final String clientId) throws ClientNotFoundException {
@@ -30,10 +33,15 @@ public class JpaDatabase implements Database {
     }
 
     public AuthorizationRequest getAuthorizationRequest(final String key) throws AuthorizationRequestNotFoundException {
-        return authorizationRequestsRepository.findByKey(key);
+        return authorizationRequestsRepository.findByRequestId(key);
     }
 
     public AuthorizationRequest popAuthorizationRequest(final String key) throws AuthorizationRequestNotFoundException {
-        return authorizationRequestsRepository.popByKey(key);
+        return authorizationRequestsRepository.popByRequestId(key);
     }
+
+    public void saveAuthorizationCode(final AuthorizationCode authorizationCode) {
+        authorizationCodesRepository.save(authorizationCode);
+    }
+
 }
