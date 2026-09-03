@@ -22,6 +22,8 @@ import com.swetlokognatsk.authorization_server.ports.Database;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 // TODO create all base scenarios in oauth and write logs from each service in demonstration purposes
 @SpringBootApplication
@@ -31,6 +33,8 @@ public class AuthorizationServerApplication {
 
 	private static final String HOME = "/";
 	private static final String AUTHORIZATION_ENDPOINT = "/authorize";
+	private static final String APPROVE_AUTH_ENDPOINT = "/approve-authorization";
+	private static final String DENY_AUTH_ENDPOINT = "/deny-authorization";
 
 	private static ApplicationContext ctx;
 
@@ -57,6 +61,8 @@ public class AuthorizationServerApplication {
 			model.addAttribute("requestId", requestId);
 			model.addAttribute("clientId", clientId);
 			model.addAttribute("redirectUri", redirectUri);
+			model.addAttribute("approveEndpoint", APPROVE_AUTH_ENDPOINT);
+			model.addAttribute("denyEndpoint", DENY_AUTH_ENDPOINT);
 			view = "approve";
 		} catch (ClientNotFoundException e) {
 			model.addAttribute("error", "unknown client: %s".formatted(clientId));
@@ -68,6 +74,16 @@ public class AuthorizationServerApplication {
 			view = "error";
 		}
 		return new ModelAndView(view, model.asMap());
+	}
+
+	@PostMapping(APPROVE_AUTH_ENDPOINT)
+	public ResponseEntity<?> approveAuthorization(@RequestParam final String requestId) {
+		return ResponseEntity.ok("approveAuthorization, requestId: %s".formatted(requestId));
+	}
+
+	@PostMapping(DENY_AUTH_ENDPOINT)
+	public ResponseEntity<?> denyAuthorization(@RequestParam final String requestId) {
+		return ResponseEntity.ok("denyAuthorization, requestId: %s".formatted(requestId));
 	}
 
 	/**

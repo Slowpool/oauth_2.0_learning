@@ -1,7 +1,17 @@
-approve
+Approve this client?
+<div th:text="|ID: ${clientId}|">babadzaka2</div>
 </br>
 </br>
+</br>
+<form method="POST" th:action="|${approveEndpoint}|">
+    <button type="submit">Approve</button>
+    <input name="requestId" type="hidden" th:value="${requestId}">
+</form>
+</br>
+<form method="POST" action="/deny-authorization">
+    <button type="submit">Deny</button>
+    <input name="requestId" type="hidden" th:value="${requestId}">
+</form>
 </br>
 <div th:text="|requestId: ${requestId}|">babadzaka1</div>
-<div th:text="|clientId: ${clientId}|">babadzaka2</div>
 <div th:text="|redirectUri: ${redirectUri}|">babadzaka3</div>
