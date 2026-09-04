@@ -29,6 +29,16 @@ public class RedisAuthorizationCodesRepository extends RedisRepository implement
         return serializer.deserializeAuthorizationCode(serializedAuthorizationCode);
     }
 
+    // well, let this dry violation be. (popByCode == findByCode.replace("get", "getAndDelete"))
+    public AuthorizationCode popByCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
+        var key = buildKey(authorizationCode);
+        var serializedAuthorizationCode = redisTemplate.opsForValue().getAndDelete(key);
+        if (serializedAuthorizationCode == null) {
+            throw new AuthorizationCodeNotFoundException();
+        }
+        return serializer.deserializeAuthorizationCode(serializedAuthorizationCode);
+    }
+
     private static String buildKey(final AuthorizationCode authorizationCode) {
         return buildKey(authorizationCode.code());
     }

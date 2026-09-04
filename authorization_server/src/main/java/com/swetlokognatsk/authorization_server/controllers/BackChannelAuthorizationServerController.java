@@ -13,7 +13,9 @@ import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFo
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentialsException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentialsFormatException;
+import com.swetlokognatsk.authorization_server.exceptions.InvalidClientIdException;
 import com.swetlokognatsk.authorization_server.exceptions.UnknownGrantTypeException;
+import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.ports.ClientSecretHasher;
 import com.swetlokognatsk.authorization_server.ports.Database;
@@ -42,6 +44,8 @@ public class BackChannelAuthorizationServerController {
                 validateAuthCredentials(authCredentials);
                 validateGrantType(grantType);
                 validateAuthorizationCode(authorizationCode);
+                var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
+                validateClientId(authCredentials, authorizationCodeEntity);
                 // latch
                 return ok("ok");
             } catch (InvalidAuthCredentialsFormatException e) {
@@ -50,9 +54,11 @@ public class BackChannelAuthorizationServerController {
                 return status(401).body("invalid auth credentials");
             } catch (UnknownGrantTypeException e) {
                 return unprocessableContent().body("unknown grant type: %s".formatted(grantType));
-            }
-            catch (AuthorizationCodeNotFoundException e) {
+            } catch (AuthorizationCodeNotFoundException e) {
                 return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
+            }
+            catch (InvalidClientIdException e) {
+                return badRequest().body("clientId divergency");
             }
         } else {
             return status(401).body("auth credentials header is not found in request");
@@ -107,6 +113,23 @@ public class BackChannelAuthorizationServerController {
 
     private void validateAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
         database.getAuthorizationCode(authorizationCode);
+    }
+
+    private AuthorizationCode popAuthorizationCode(final String authorizationCode) {
+        try {
+            return database.popAuthorizationCode(authorizationCode);
+        } catch (AuthorizationCodeNotFoundException e) {
+            throw new RuntimeException("auth code is not found, though it must have been");
+        }
+    }
+
+    private void validateClientId(final AuthCredentials authCredentials, final AuthorizationCode authorizationCode) throws InvalidClientIdException {
+        var credentialsClientId = authCredentials.clientId();
+        var codeClientId = authorizationCode.clientId();
+
+        if (!credentialsClientId.equals(codeClientId)) {
+            throw new InvalidClientIdException();
+        }
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {

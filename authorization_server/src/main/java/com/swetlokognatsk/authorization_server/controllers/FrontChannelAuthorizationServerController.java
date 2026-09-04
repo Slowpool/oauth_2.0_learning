@@ -88,7 +88,7 @@ public class FrontChannelAuthorizationServerController {
             validateResponseType(authorizationRequest.responseType());
 
             var code = generateCode();
-            saveAuthorizationCode(requestId, code);
+            saveAuthorizationCode(requestId, code, authorizationRequest.clientId());
 
             redirectUri = UriBuilder.buildRedirectUriOnSuccess(code, authorizationRequest);
         } catch (UnsupportedResponseTypeException e) {
@@ -99,8 +99,8 @@ public class FrontChannelAuthorizationServerController {
         return new RedirectView(redirectUri);
     }
 
-    private void saveAuthorizationCode(final String requestId, final String code) {
-        var authorizationCode = new AuthorizationCode(requestId, code);
+    private void saveAuthorizationCode(final String requestId, final String code, final String clientId) {
+        var authorizationCode = new AuthorizationCode(requestId, code, clientId);
         database.saveAuthorizationCode(authorizationCode);
     }
 

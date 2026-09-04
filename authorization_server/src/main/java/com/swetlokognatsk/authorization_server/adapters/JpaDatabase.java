@@ -49,4 +49,8 @@ public class JpaDatabase implements Database {
         return authorizationCodesRepository.findByCode(authorizationCode);
     }
 
+    public AuthorizationCode popAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
+        return authorizationCodesRepository.popByCode(authorizationCode);
+    }
+
 }

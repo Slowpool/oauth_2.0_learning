@@ -8,4 +8,6 @@ public interface AuthorizationCodesRepository {
     void save(AuthorizationCode authorizationCode);
 
     AuthorizationCode findByCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
+
+    AuthorizationCode popByCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
 }

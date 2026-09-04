@@ -19,4 +19,6 @@ public interface Database {
     void saveAuthorizationCode(AuthorizationCode authorizationCode);
 
     AuthorizationCode getAuthorizationCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
+
+    AuthorizationCode popAuthorizationCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
 }
