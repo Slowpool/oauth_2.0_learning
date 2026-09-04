@@ -27,4 +27,6 @@
 
    <include file="1788333965_add_redirect_uris_table.xml" relativeToChangelogFile="true" />
 
+   <include file="1788530874_add_auto_increment_to_access_tokens.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

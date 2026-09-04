@@ -17,8 +17,10 @@ import com.swetlokognatsk.authorization_server.exceptions.InvalidClientIdExcepti
 import com.swetlokognatsk.authorization_server.exceptions.UnknownGrantTypeException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.Client;
+import com.swetlokognatsk.authorization_server.ports.AccessTokenGenerator;
 import com.swetlokognatsk.authorization_server.ports.ClientSecretHasher;
 import com.swetlokognatsk.authorization_server.ports.Database;
+import com.swetlokognatsk.oauth_db.models.AccessToken;
 
 @RestController
 public class BackChannelAuthorizationServerController {
@@ -29,11 +31,13 @@ public class BackChannelAuthorizationServerController {
     private final ApplicationContext ctx;
     private final Database database;
     private final ClientSecretHasher clientSecretHasher;
+    private final AccessTokenGenerator accessTokenGenerator;
 
-    public BackChannelAuthorizationServerController(final ApplicationContext ctx, final Database database, final ClientSecretHasher clientSecretHasher) {
+    public BackChannelAuthorizationServerController(final ApplicationContext ctx, final Database database, final ClientSecretHasher clientSecretHasher, final AccessTokenGenerator accessTokenGenerator) {
         this.ctx = ctx;
         this.database = database;
         this.clientSecretHasher = clientSecretHasher;
+        this.accessTokenGenerator = accessTokenGenerator;
     }
 
     @RequestMapping("/token")
@@ -46,6 +50,9 @@ public class BackChannelAuthorizationServerController {
                 validateAuthorizationCode(authorizationCode);
                 var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
                 validateClientId(authCredentials, authorizationCodeEntity);
+                var accessToken = generateAccessToken(authCredentials.clientId);
+                saveAccessToken(accessToken);
+
                 // latch
                 return ok("ok");
             } catch (InvalidAuthCredentialsFormatException e) {
@@ -56,8 +63,7 @@ public class BackChannelAuthorizationServerController {
                 return unprocessableContent().body("unknown grant type: %s".formatted(grantType));
             } catch (AuthorizationCodeNotFoundException e) {
                 return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
-            }
-            catch (InvalidClientIdException e) {
+            } catch (InvalidClientIdException e) {
                 return badRequest().body("clientId divergency");
             }
         } else {
@@ -132,7 +138,20 @@ public class BackChannelAuthorizationServerController {
         }
     }
 
-    private static record AuthCredentials(String clientId, String clientSecret) {
+    private AccessToken generateAccessToken(final String clientId) {
+        try {
+            var client = database.getClient(clientId);
+            var newAccessTokenValue = accessTokenGenerator.generate();
+            return new AccessToken(newAccessTokenValue, client.getId());
+        } catch (ClientNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    private void saveAccessToken(final AccessToken accessToken) {
+        database.saveAccessToken(accessToken);
+    }
+
+    private static record AuthCredentials(String clientId, String clientSecret) {
     }
 }

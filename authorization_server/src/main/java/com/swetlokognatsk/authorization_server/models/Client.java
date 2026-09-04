@@ -22,6 +22,10 @@ public class Client {
     @JoinColumn(name = "client_id")
     List<RedirectUri> redirectUris;
 
+    public int getId() {
+        return id;
+    }
+
     public String getSecretHash() {
         return secretHash;
     }

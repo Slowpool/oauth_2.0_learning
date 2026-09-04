@@ -11,6 +11,8 @@ import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationCodesRepository;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
 import com.swetlokognatsk.authorization_server.ports.Database;
+import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
+import com.swetlokognatsk.oauth_db.models.AccessToken;
 
 @Repository
 public class JpaDatabase implements Database {
@@ -18,11 +20,13 @@ public class JpaDatabase implements Database {
     private final ClientsDao clientsDao;
     private final AuthorizationRequestsRepository authorizationRequestsRepository;
     private final AuthorizationCodesRepository authorizationCodesRepository;
+    private final AccessTokenDao accessTokenDao;
 
-    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository) {
+    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository, final AccessTokenDao accessTokenDao) {
         this.clientsDao = clientsDao;
         this.authorizationRequestsRepository = authorizationRequestsRepository;
         this.authorizationCodesRepository = authorizationCodesRepository;
+        this.accessTokenDao = accessTokenDao;
     }
 
     public Client getClient(final String clientId) throws ClientNotFoundException {
@@ -51,6 +55,10 @@ public class JpaDatabase implements Database {
 
     public AuthorizationCode popAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
         return authorizationCodesRepository.popByCode(authorizationCode);
+    }
+
+    public void saveAccessToken(final AccessToken accessToken) {
+        accessTokenDao.save(accessToken);
     }
 
 }

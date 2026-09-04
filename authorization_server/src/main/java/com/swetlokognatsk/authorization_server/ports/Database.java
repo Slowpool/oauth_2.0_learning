@@ -6,6 +6,7 @@ import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundExceptio
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.models.Client;
+import com.swetlokognatsk.oauth_db.models.AccessToken;
 
 public interface Database {
     Client getClient(String clientId) throws ClientNotFoundException;
@@ -21,4 +22,6 @@ public interface Database {
     AuthorizationCode getAuthorizationCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
 
     AuthorizationCode popAuthorizationCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
+
+    void saveAccessToken(AccessToken accessToken);
 }

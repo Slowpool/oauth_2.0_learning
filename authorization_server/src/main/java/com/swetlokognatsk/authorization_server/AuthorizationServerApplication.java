@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 
 // TODO create all base scenarios in oauth and write logs from each service in demonstration purposes
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "com.swetlokognatsk.authorization_server", "com.swetlokognatsk.oauth_db.models", "com.swetlokognatsk.oauth_db.daos" })
 @EntityScan(basePackages = { "com.swetlokognatsk.authorization_server", "com.swetlokognatsk.oauth_db.models" })
 public class AuthorizationServerApplication {
 
