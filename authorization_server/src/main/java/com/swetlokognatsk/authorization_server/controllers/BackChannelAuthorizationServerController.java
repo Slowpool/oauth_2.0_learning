@@ -15,6 +15,7 @@ import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentials
 import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentialsFormatException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidClientIdException;
 import com.swetlokognatsk.authorization_server.exceptions.UnknownGrantTypeException;
+import com.swetlokognatsk.authorization_server.models.AccessTokenBody;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.ports.AccessTokenGenerator;
@@ -27,6 +28,8 @@ public class BackChannelAuthorizationServerController {
 
     private static final String BASIC_AUTH_START = "Basic ";
     private static final List<String> KNOWN_GRANT_TYPES = List.of("authorization_code");
+
+    private static final String BEARER_TOKEN_TYPE = "Bearer";
 
     private final ApplicationContext ctx;
     private final Database database;
@@ -53,8 +56,8 @@ public class BackChannelAuthorizationServerController {
                 var accessToken = generateAccessToken(authCredentials.clientId);
                 saveAccessToken(accessToken);
 
-                // latch
-                return ok("ok");
+                var accessTokenBody = buildAccessTokenBody(accessToken);
+                return status(200).body(accessTokenBody);
             } catch (InvalidAuthCredentialsFormatException e) {
                 return badRequest().body("invalid auth credentials format. expected format: \"Authorization: Basic clientId:clientSecret\"");
             } catch (InvalidAuthCredentialsException e) {
@@ -150,6 +153,11 @@ public class BackChannelAuthorizationServerController {
 
     private void saveAccessToken(final AccessToken accessToken) {
         database.saveAccessToken(accessToken);
+    }
+
+    private AccessTokenBody buildAccessTokenBody(final AccessToken accessToken) {
+        var accessTokenValue = accessToken.getValue().value();
+        return new AccessTokenBody(accessTokenValue, BEARER_TOKEN_TYPE);
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {

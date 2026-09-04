@@ -105,7 +105,7 @@ public final class AppHttpClient {
         var jsonToken = switch (tokenStrategy) {
         case SINGLE_ACCESS_TOKEN -> """
                 {
-                    "value": "accaccaccaccacc",
+                    "access_token": "accaccaccaccacc",
                     "type": "access"
                 }
                     """;
