@@ -2,6 +2,7 @@ package com.swetlokognatsk.authorization_server.adapters;
 
 import org.springframework.stereotype.Repository;
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
+import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
@@ -42,6 +43,10 @@ public class JpaDatabase implements Database {
 
     public void saveAuthorizationCode(final AuthorizationCode authorizationCode) {
         authorizationCodesRepository.save(authorizationCode);
+    }
+
+    public AuthorizationCode getAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
+        return authorizationCodesRepository.findByCode(authorizationCode);
     }
 
 }

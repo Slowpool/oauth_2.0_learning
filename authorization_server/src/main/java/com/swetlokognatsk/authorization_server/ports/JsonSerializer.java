@@ -9,4 +9,6 @@ public interface JsonSerializer {
     AuthorizationRequest deserializeAuthorizationRequest(String authorizationRequestJson);
 
     String serializeAuthorizationCode(AuthorizationCode authorizationCode);
+
+    AuthorizationCode deserializeAuthorizationCode(String authorizationCodeJson);
 }

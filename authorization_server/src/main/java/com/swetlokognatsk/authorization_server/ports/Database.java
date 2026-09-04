@@ -1,5 +1,6 @@
 package com.swetlokognatsk.authorization_server.ports;
 
+import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
@@ -16,4 +17,6 @@ public interface Database {
     AuthorizationRequest popAuthorizationRequest(String key) throws AuthorizationRequestNotFoundException;
 
     void saveAuthorizationCode(AuthorizationCode authorizationCode);
+
+    AuthorizationCode getAuthorizationCode(String authorizationCode) throws AuthorizationCodeNotFoundException;
 }

@@ -51,6 +51,9 @@ public class BackChannelAuthorizationServerController {
             } catch (UnknownGrantTypeException e) {
                 return unprocessableContent().body("unknown grant type: %s".formatted(grantType));
             }
+            catch (AuthorizationCodeNotFoundException e) {
+                return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
+            }
         } else {
             return status(401).body("auth credentials header is not found in request");
         }
@@ -102,12 +105,8 @@ public class BackChannelAuthorizationServerController {
         return KNOWN_GRANT_TYPES.contains(grantType);
     }
 
-    private void validateAuthorizationCode(final String authorizationCode) {
-        try {
-            database.getAuthorizationCode(authorizationCode);
-        } catch (AuthorizationCodeNotFoundException e) {
-
-        }
+    private void validateAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
+        database.getAuthorizationCode(authorizationCode);
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {
