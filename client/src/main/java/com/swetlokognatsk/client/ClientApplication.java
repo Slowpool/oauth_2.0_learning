@@ -31,7 +31,6 @@ import com.swetlokognatsk.client.services.AppHttpClient;
 import com.swetlokognatsk.client.services.Service;
 import com.swetlokognatsk.client.services.TokenParser;
 import com.swetlokognatsk.client.services.UriBuilder;
-
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
