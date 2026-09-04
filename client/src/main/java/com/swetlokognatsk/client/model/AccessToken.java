@@ -8,8 +8,8 @@ public final class AccessToken extends Token implements Serializable {
     public final String type;
     
     // TODO do i need type here?
-    public AccessToken(final String value, final String type) {
-        this.value = value;
+    public AccessToken(final String accessToken, final String type) {
+        this.value = accessToken;
         this.type = type;
     }
 

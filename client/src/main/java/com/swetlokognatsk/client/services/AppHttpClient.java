@@ -31,6 +31,9 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 public final class AppHttpClient {
 
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String AUTHORIZATION_CODE = "authorization_code";
+
     private static HttpResponse<?> sendHttpRequest(final RequestMethod method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
         var requestBuilder = HttpRequest.newBuilder(URI.create(uri));
         switch (method) {
@@ -90,25 +93,23 @@ public final class AppHttpClient {
         return encodedCredentials;
     }
 
-    // TODO in prod tokenStrategy is redundant here
+    // TODO remove tokenStrategy after refreshToken endpoint implementing
+    // keep in mind that the tokenStrategy on prod is redundant here
     public static String sendTokenRequest(final String code, final TokenStrategy tokenStrategy) throws IOException, InterruptedException {
         var uri = AuthorizationServer.getInternalTokenEndpoint();
 
-        // TODO revise it later, on connecting all parts together
         var headers = buildAuthHeaders();
 
         var body = newBody();
-        body.put("grant_type", "authorization_code");
-        body.put("code", code);
-        // TODO what does it do here? upd: it's used for security reasons. book says it'll be implemented on auth server's side in further chapter. this redirect_uri must be the same as the one from `/authorize?redirect_uri=...` redirect from client app.
+        body.put(GRANT_TYPE, AUTHORIZATION_CODE);
+        body.put("authorization_code", code);
+        // what does it do here?
+        // upd: it's used for security reasons (xss protection). book says it'll be implemented on auth server's side in further chapter. this redirect_uri must be the same as the one from `/authorize?redirect_uri=...` redirect from client app.
         body.put("redirect_uri", Client.getRedirectURI());
+
+        var result = sendHttpRequest(POST, uri, headers, body);
         var jsonToken = switch (tokenStrategy) {
-        case SINGLE_ACCESS_TOKEN -> """
-                {
-                    "access_token": "accaccaccaccacc",
-                    "type": "access"
-                }
-                    """;
+        case SINGLE_ACCESS_TOKEN -> bodyUnlessError(result);
         case REFRESH_AND_ACCESS_PAIR -> """
                 {
                     "access_token": "accaccaccaccacc",
@@ -119,14 +120,6 @@ public final class AppHttpClient {
         default -> throw new RuntimeException("unknown token strategy: %s".formatted(tokenStrategy));
         };
         return jsonToken;
-        // TODO return real raw json
-        // var result = sendHttpRequest(POST, uri, new HashMap<>(), body);
-        // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-        //     return "latch";
-        // }
-        // else {
-        //     throw new IOException("auth returned error. status: %d, message: %s".formatted(result.statusCode(), result.body()));
-        // }
     }
 
     private static Map<String, String> buildAuthHeaders() {
