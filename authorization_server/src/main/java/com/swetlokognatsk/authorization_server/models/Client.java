@@ -2,7 +2,6 @@ package com.swetlokognatsk.authorization_server.models;
 
 import java.util.List;
 import java.util.Set;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -23,10 +22,14 @@ public class Client {
     @JoinColumn(name = "client_id")
     List<RedirectUri> redirectUris;
 
+    public String getSecretHash() {
+        return secretHash;
+    }
+
     public List<RedirectUri> getRedirectUris() {
         return redirectUris;
     }
-    
+
     public Client() {
     }
 
