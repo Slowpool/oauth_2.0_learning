@@ -11,8 +11,10 @@ import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationCodesRepository;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
 import com.swetlokognatsk.authorization_server.ports.Database;
-import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
+import com.swetlokognatsk.oauth_db.daos.AccessTokensDao;
+import com.swetlokognatsk.oauth_db.daos.RefreshTokensDao;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
+import com.swetlokognatsk.oauth_db.models.RefreshToken;
 
 @Repository
 public class JpaDatabase implements Database {
@@ -20,13 +22,15 @@ public class JpaDatabase implements Database {
     private final ClientsDao clientsDao;
     private final AuthorizationRequestsRepository authorizationRequestsRepository;
     private final AuthorizationCodesRepository authorizationCodesRepository;
-    private final AccessTokenDao accessTokenDao;
+    private final AccessTokensDao accessTokensDao;
+    private final RefreshTokensDao refreshTokensDao;
 
-    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository, final AccessTokenDao accessTokenDao) {
+    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository, final AccessTokensDao AccessTokensDao, final RefreshTokensDao refreshTokensDao) {
         this.clientsDao = clientsDao;
         this.authorizationRequestsRepository = authorizationRequestsRepository;
         this.authorizationCodesRepository = authorizationCodesRepository;
-        this.accessTokenDao = accessTokenDao;
+        this.accessTokensDao = AccessTokensDao;
+        this.refreshTokensDao = refreshTokensDao;
     }
 
     public Client getClient(final String clientId) throws ClientNotFoundException {
@@ -58,7 +62,11 @@ public class JpaDatabase implements Database {
     }
 
     public void saveAccessToken(final AccessToken accessToken) {
-        accessTokenDao.save(accessToken);
+        accessTokensDao.save(accessToken);
+    }
+
+    public void saveRefreshToken(final RefreshToken refreshToken) {
+        refreshTokensDao.save(refreshToken);
     }
 
 }

@@ -1,0 +1,24 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="16" author="slowpool">
+        <addColumn tableName="refresh_tokens">
+            <column name="expires_in" type="int">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="17" author="slowpool">
+        <sql>
+            ALTER TABLE refresh_tokens
+            ADD CONSTRAINT expires_in_check CHECK (expires_in &gt; 0);
+        </sql>
+        <rollback>
+            ALTER TABLE refresh_tokens
+            DROP CONSTRAINT expires_in_check;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,25 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="15" author="slowpool">
+        <createTable tableName="refresh_tokens">
+            <column name="id" type="int" autoIncrement="true">
+                <constraints primaryKey="true" />
+            </column>
+            <column name="client_id" type="int">
+                <constraints nullable="false" foreignKeyName="refresh_token_client_id" references="clients(id)" />
+            </column>
+            <column name="refresh_token" type="varchar(64)">
+                <constraints nullable="false" unique="true" />
+            </column>
+            <column name="created_on_programmatically" type="datetime">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_on_db" type="datetime" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

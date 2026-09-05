@@ -4,5 +4,5 @@ import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 
 public interface AccessTokenGenerator {
 
-    AccessTokenValue generate();
+    AccessTokenValue generateAccessToken();
 }

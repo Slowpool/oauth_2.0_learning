@@ -9,6 +9,8 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 @EntityScan(basePackages = { "com.swetlokognatsk.authorization_server", "com.swetlokognatsk.oauth_db.models" })
 public class AuthorizationServerApplication {
 
+	public final static TokenStrategy TOKEN_STRATEGY = TokenStrategy.REFRESH_AND_ACCESS_PAIR;
+	
 	public static void main(String[] args) {
 		SpringApplication.run(AuthorizationServerApplication.class, args);
 	}

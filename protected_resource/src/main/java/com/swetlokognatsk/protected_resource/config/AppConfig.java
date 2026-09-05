@@ -3,7 +3,7 @@ package com.swetlokognatsk.protected_resource.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.swetlokognatsk.protected_resource.adapters.DaoDatabase;
-import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
+import com.swetlokognatsk.oauth_db.daos.AccessTokensDao;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.WordsDao;
 import com.swetlokognatsk.protected_resource.ports.Database;
 import com.swetlokognatsk.protected_resource.services.AccessTokenValidator;
@@ -12,8 +12,8 @@ import com.swetlokognatsk.protected_resource.services.AccessTokenValidator;
 class AppConfig {
 
     @Bean
-    AccessTokenDao getAccessTokenDao() {
-        return new AccessTokenDao();
+    AccessTokensDao getAccessTokensDao() {
+        return new AccessTokensDao();
     }
 
     @Bean
@@ -22,8 +22,8 @@ class AppConfig {
     }
 
     @Bean
-    Database getDatabase(final AccessTokenDao accessTokenDao, final WordsDao wordsDao) {
-        return new DaoDatabase(accessTokenDao, wordsDao);
+    Database getDatabase(final AccessTokensDao AccessTokensDao, final WordsDao wordsDao) {
+        return new DaoDatabase(AccessTokensDao, wordsDao);
     }
 
     @Bean

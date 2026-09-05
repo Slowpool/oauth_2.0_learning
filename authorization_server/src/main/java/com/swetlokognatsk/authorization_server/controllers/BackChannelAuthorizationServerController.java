@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.http.ResponseEntity.*;
+import com.swetlokognatsk.authorization_server.AuthorizationServerApplication;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentialsException;
@@ -19,10 +20,16 @@ import com.swetlokognatsk.authorization_server.exceptions.UnknownGrantTypeExcept
 import com.swetlokognatsk.authorization_server.models.AccessTokenBody;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.Client;
+import com.swetlokognatsk.authorization_server.models.RefreshTokenBody;
 import com.swetlokognatsk.authorization_server.ports.AccessTokenGenerator;
 import com.swetlokognatsk.authorization_server.ports.ClientSecretHasher;
 import com.swetlokognatsk.authorization_server.ports.Database;
+import com.swetlokognatsk.authorization_server.ports.RefreshTokenGenerator;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
+import com.swetlokognatsk.oauth_db.models.RefreshAndAccessTokensPair;
+import com.swetlokognatsk.oauth_db.models.RefreshToken;
+
+import static com.swetlokognatsk.authorization_server.AuthorizationServerApplication.*;
 
 @RestController
 public class BackChannelAuthorizationServerController {
@@ -33,17 +40,20 @@ public class BackChannelAuthorizationServerController {
     private static final String BEARER_TOKEN_TYPE = "Bearer";
 
     private static final int ACCESS_TOKEN_EXPIRES_IN = 3600;
+    private static final int REFRESH_TOKEN_EXPIRES_IN = 3600;
 
     private final ApplicationContext ctx;
     private final Database database;
     private final ClientSecretHasher clientSecretHasher;
     private final AccessTokenGenerator accessTokenGenerator;
+    private final RefreshTokenGenerator refreshTokenGenerator;
 
-    public BackChannelAuthorizationServerController(final ApplicationContext ctx, final Database database, final ClientSecretHasher clientSecretHasher, final AccessTokenGenerator accessTokenGenerator) {
+    public BackChannelAuthorizationServerController(final ApplicationContext ctx, final Database database, final ClientSecretHasher clientSecretHasher, final AccessTokenGenerator accessTokenGenerator, final RefreshTokenGenerator refreshTokenGenerator) {
         this.ctx = ctx;
         this.database = database;
         this.clientSecretHasher = clientSecretHasher;
         this.accessTokenGenerator = accessTokenGenerator;
+        this.refreshTokenGenerator = refreshTokenGenerator;
     }
 
     @RequestMapping("/token")
@@ -56,11 +66,22 @@ public class BackChannelAuthorizationServerController {
                 validateAuthorizationCode(authorizationCode);
                 var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
                 validateClientId(authCredentials, authorizationCodeEntity);
+                
                 var accessToken = generateAccessToken(authCredentials.clientId);
                 saveAccessToken(accessToken);
 
-                var accessTokenBody = buildAccessTokenBody(accessToken);
-                return status(200).body(accessTokenBody);
+                Object body = switch (TOKEN_STRATEGY) {
+                    case SINGLE_ACCESS_TOKEN -> {
+                        yield buildAccessTokenBody(accessToken);
+                    }
+                    case REFRESH_AND_ACCESS_PAIR -> {
+                        var refreshToken = generateRefreshToken(authCredentials.clientId);
+                        saveRefreshToken(refreshToken);
+                        yield buildRefreshAndAccessTokensBody(accessToken, refreshToken);
+                    }
+                    default -> throw new IllegalArgumentException("unknown token strategy: %s".formatted(TOKEN_STRATEGY));
+                };
+                return status(200).body(body);
             } catch (InvalidAuthCredentialsFormatException e) {
                 return badRequest().body("invalid auth credentials format. expected format: \"Authorization: Basic clientId:clientSecret\"");
             } catch (InvalidAuthCredentialsException e) {
@@ -147,8 +168,18 @@ public class BackChannelAuthorizationServerController {
     private AccessToken generateAccessToken(final String clientId) {
         try {
             var client = database.getClient(clientId);
-            var newAccessTokenValue = accessTokenGenerator.generate();
+            var newAccessTokenValue = accessTokenGenerator.generateAccessToken();
             return new AccessToken(newAccessTokenValue, client.getId(), LocalDateTime.now(), ACCESS_TOKEN_EXPIRES_IN);
+        } catch (ClientNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    // DRY! though it's learning project
+    private RefreshToken generateRefreshToken(final String clientId) {
+        try {
+            var client = database.getClient(clientId);
+            var newRefreshTokenValue = refreshTokenGenerator.generateRefreshToken();
+            return new RefreshToken(newRefreshTokenValue, client.getId(), LocalDateTime.now(), REFRESH_TOKEN_EXPIRES_IN);
         } catch (ClientNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -161,6 +192,15 @@ public class BackChannelAuthorizationServerController {
     private AccessTokenBody buildAccessTokenBody(final AccessToken accessToken) {
         var accessTokenValue = accessToken.getValue().value();
         return new AccessTokenBody(accessTokenValue, BEARER_TOKEN_TYPE, accessToken.getExpiresIn());
+    }
+
+    private RefreshTokenBody buildRefreshAndAccessTokensBody(final AccessToken accessToken, final RefreshToken refreshToken) {
+        // TODO
+        return new RefreshTokenBody();
+    }
+
+    private void saveRefreshToken(final RefreshToken refreshToken) {
+        database.saveRefreshToken(refreshToken);
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {

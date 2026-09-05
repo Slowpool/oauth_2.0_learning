@@ -35,4 +35,8 @@
 
    <include file="1788596025_add_created_on_columns_to_access_tokens.xml" relativeToChangelogFile="true" />
 
+   <include file="1788609249_add_refresh_tokens_table.xml" relativeToChangelogFile="true" />
+
+   <include file="1788612997_add_expires_in_to_refresh_tokens.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

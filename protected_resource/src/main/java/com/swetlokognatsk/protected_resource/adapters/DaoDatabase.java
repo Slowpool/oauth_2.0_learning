@@ -5,7 +5,7 @@ import java.util.Set;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 import com.swetlokognatsk.oauth_db.AccessTokenNotFoundException;
-import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
+import com.swetlokognatsk.oauth_db.daos.AccessTokensDao;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.WordsDao;
 import com.swetlokognatsk.protected_resource.ports.Database;
 import jakarta.persistence.EntityExistsException;
@@ -14,16 +14,16 @@ import jakarta.persistence.EntityNotFoundException;
 // TODO DaoDatabase
 public final class DaoDatabase implements Database {
 
-    private final AccessTokenDao accessTokenDao;
+    private final AccessTokensDao AccessTokensDao;
     private final WordsDao wordsDao;
 
-    public DaoDatabase(final AccessTokenDao accessTokenDao, final WordsDao wordsDao) {
-        this.accessTokenDao = accessTokenDao;
+    public DaoDatabase(final AccessTokensDao AccessTokensDao, final WordsDao wordsDao) {
+        this.AccessTokensDao = AccessTokensDao;
         this.wordsDao = wordsDao;
     }
 
     public AccessToken findAccessToken(final AccessTokenValue accessTokenValue) throws AccessTokenNotFoundException {
-        return accessTokenDao.findByValue(accessTokenValue);
+        return AccessTokensDao.findByValue(accessTokenValue);
     }
 
     public void saveAccessToken(final AccessToken accessToken) {
