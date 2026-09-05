@@ -1,5 +1,6 @@
 package com.swetlokognatsk.authorization_server.controllers;
 
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import org.springframework.context.ApplicationContext;
@@ -30,6 +31,8 @@ public class BackChannelAuthorizationServerController {
     private static final List<String> KNOWN_GRANT_TYPES = List.of("authorization_code");
 
     private static final String BEARER_TOKEN_TYPE = "Bearer";
+
+    private static final int ACCESS_TOKEN_EXPIRES_IN = 3600;
 
     private final ApplicationContext ctx;
     private final Database database;
@@ -145,7 +148,7 @@ public class BackChannelAuthorizationServerController {
         try {
             var client = database.getClient(clientId);
             var newAccessTokenValue = accessTokenGenerator.generate();
-            return new AccessToken(newAccessTokenValue, client.getId());
+            return new AccessToken(newAccessTokenValue, client.getId(), LocalDateTime.now(), ACCESS_TOKEN_EXPIRES_IN);
         } catch (ClientNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -157,7 +160,7 @@ public class BackChannelAuthorizationServerController {
 
     private AccessTokenBody buildAccessTokenBody(final AccessToken accessToken) {
         var accessTokenValue = accessToken.getValue().value();
-        return new AccessTokenBody(accessTokenValue, BEARER_TOKEN_TYPE);
+        return new AccessTokenBody(accessTokenValue, BEARER_TOKEN_TYPE, accessToken.getExpiresIn());
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {

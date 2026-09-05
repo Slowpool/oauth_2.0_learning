@@ -7,7 +7,9 @@ import com.swetlokognatsk.oauth_db.AccessTokenNotFoundException;
 import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
 import com.swetlokognatsk.oauth_db.models.Scopes;
 import com.swetlokognatsk.oauth_db.models.ScopesSet;
-import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
+import com.swetlokognatsk.protected_resource.exceptions.AccessTokenIsExpiredException;
+import com.swetlokognatsk.protected_resource.exceptions.RequiredScopesAreNotGrantedException;
+import com.swetlokognatsk.protected_resource.services.AccessTokenValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import static com.swetlokognatsk.protected_resource.services.AuthHeaderHelper.*;
@@ -16,10 +18,10 @@ import java.io.IOException;
 @Component
 public final class OAuthInterceptor implements HandlerInterceptor {
 
-    private AccessTokenVerifier accessTokenVerifier;
+    private AccessTokenValidator accessTokenValidator;
 
-    public OAuthInterceptor(final AccessTokenVerifier accessTokenVerifier) {
-        this.accessTokenVerifier = accessTokenVerifier;
+    public OAuthInterceptor(final AccessTokenValidator accessTokenValidator) {
+        this.accessTokenValidator = accessTokenValidator;
     }
 
     public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) throws IOException {
@@ -47,7 +49,7 @@ public final class OAuthInterceptor implements HandlerInterceptor {
             try {
                 // TODO ensure it works fine when auth server is done
                 var requiredScopes = getRequiredScopes(request);
-                verifyAccessTokenAndScopes(accessToken, requiredScopes);
+                validateAccessToken(accessToken, requiredScopes);
                 authIsSuccessful = true;
             } catch (AccessTokenNotFoundException e) {
                 authIsSuccessful = false;
@@ -58,12 +60,17 @@ public final class OAuthInterceptor implements HandlerInterceptor {
                 response.setStatus(403);
                 response.getWriter().write("this accessToken is not granted with required permissions: %s".formatted(e.getMessage()));
             }
+            catch (AccessTokenIsExpiredException e) {
+                authIsSuccessful = false;
+                response.setStatus(401);
+                response.getWriter().write("accessToken is expired");
+            }
         }
         return authIsSuccessful;
     }
 
-    private void verifyAccessTokenAndScopes(final AccessTokenValue accessTokenValue, final ScopesSet requiredScopes) throws AccessTokenNotFoundException, RequiredScopesAreNotGrantedException {
-        accessTokenVerifier.verify(accessTokenValue, requiredScopes);
+    private void validateAccessToken(final AccessTokenValue accessTokenValue, final ScopesSet requiredScopes) throws AccessTokenNotFoundException, AccessTokenIsExpiredException, RequiredScopesAreNotGrantedException {
+        accessTokenValidator.validate(accessTokenValue, requiredScopes);
     }
 
     private ScopesSet getRequiredScopes(final HttpServletRequest request) {

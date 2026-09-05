@@ -6,7 +6,7 @@ import com.swetlokognatsk.protected_resource.adapters.DaoDatabase;
 import com.swetlokognatsk.oauth_db.daos.AccessTokenDao;
 import com.swetlokognatsk.protected_resource.adapters.jakarta.WordsDao;
 import com.swetlokognatsk.protected_resource.ports.Database;
-import com.swetlokognatsk.protected_resource.services.AccessTokenVerifier;
+import com.swetlokognatsk.protected_resource.services.AccessTokenValidator;
 
 @Configuration
 class AppConfig {
@@ -27,8 +27,8 @@ class AppConfig {
     }
 
     @Bean
-    AccessTokenVerifier getAccessTokenVerifier(final Database database) {
-        return new AccessTokenVerifier(database);
+    AccessTokenValidator getAccessTokenValidator(final Database database) {
+        return new AccessTokenValidator(database);
     }
 
 }
