@@ -46,12 +46,12 @@ public class FrontChannelAuthorizationServerController {
     }
 
     @GetMapping(AUTHORIZATION_ENDPOINT)
-    public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam(name = "state") final String state, final Model model) {
+    public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam final String state, final Model model) {
 
         String view;
 
         try {
-            var client = database.getClient(clientId);
+            var client = database.getClientByClientId(clientId);
             validateClient(client, redirectUri);
             var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType, state);
             model.addAttribute("requestId", requestId);
@@ -177,7 +177,7 @@ public class FrontChannelAuthorizationServerController {
     @RequestMapping("/clients-test2")
     public String clientsTest2() {
         try {
-            var client = database.getClient("client-1");
+            var client = database.getClientByClientId("client-1");
             return "done";
         } catch (ClientNotFoundException e) {
             return "fail: " + e.getMessage();

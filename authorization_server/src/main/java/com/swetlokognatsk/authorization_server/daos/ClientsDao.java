@@ -2,7 +2,6 @@ package com.swetlokognatsk.authorization_server.daos;
 
 import java.util.List;
 import org.springframework.stereotype.Repository;
-
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.models.Client;
 import jakarta.persistence.EntityManager;
@@ -34,10 +33,12 @@ public class ClientsDao {
 
         try {
             return result.getSingleResult();
-        }
-        catch (NoResultException e) {
+        } catch (NoResultException e) {
             throw new ClientNotFoundException();
         }
     }
 
+    public Client findById(final int id) throws ClientNotFoundException {
+        return entityManager.find(Client.class, id);
+    }
 }

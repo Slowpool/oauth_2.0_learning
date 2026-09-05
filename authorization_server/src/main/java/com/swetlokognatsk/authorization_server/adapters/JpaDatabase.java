@@ -11,10 +11,12 @@ import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationCodesRepository;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
 import com.swetlokognatsk.authorization_server.ports.Database;
+import com.swetlokognatsk.oauth_db.RefreshTokenNotFoundException;
 import com.swetlokognatsk.oauth_db.daos.AccessTokensDao;
 import com.swetlokognatsk.oauth_db.daos.RefreshTokensDao;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
+import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
 
 @Repository
 public class JpaDatabase implements Database {
@@ -33,8 +35,12 @@ public class JpaDatabase implements Database {
         this.refreshTokensDao = refreshTokensDao;
     }
 
-    public Client getClient(final String clientId) throws ClientNotFoundException {
+    public Client getClientByClientId(final String clientId) throws ClientNotFoundException {
         return clientsDao.findByClientId(clientId);
+    }
+
+    public Client getClientById(int id) throws ClientNotFoundException {
+        return clientsDao.findById(id);
     }
 
     public void saveAuthorizationRequest(final AuthorizationRequest authorizationRequest) {
@@ -67,6 +73,14 @@ public class JpaDatabase implements Database {
 
     public void saveRefreshToken(final RefreshToken refreshToken) {
         refreshTokensDao.save(refreshToken);
+    }
+
+    public RefreshToken getRefreshToken(final RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
+        return refreshTokensDao.findByValue(refreshTokenValue);
+    }
+
+    public void removeRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
+        refreshTokensDao.remove(refreshTokenValue);
     }
 
 }

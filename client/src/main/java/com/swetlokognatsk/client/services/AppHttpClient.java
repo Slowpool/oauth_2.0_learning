@@ -33,6 +33,7 @@ public final class AppHttpClient {
 
     private static final String GRANT_TYPE = "grant_type";
     private static final String AUTHORIZATION_CODE = "authorization_code";
+    private static final String REFRESH_TOKEN = "refresh_token";
 
     private static HttpResponse<?> sendHttpRequest(final RequestMethod method, final String uri, final Map<String, String> headers, final Map<String, String> body) throws IOException, InterruptedException {
         var requestBuilder = HttpRequest.newBuilder(URI.create(uri));
@@ -102,7 +103,7 @@ public final class AppHttpClient {
 
         var body = newBody();
         body.put(GRANT_TYPE, AUTHORIZATION_CODE);
-        body.put("authorization_code", code);
+        body.put(AUTHORIZATION_CODE, code);
         // what does it do here?
         // upd: it's used for security reasons (xss protection). book says it'll be implemented on auth server's side in further chapter. this redirect_uri must be the same as the one from `/authorize?redirect_uri=...` redirect from client app.
         body.put("redirect_uri", Client.getRedirectURI());
@@ -135,8 +136,8 @@ public final class AppHttpClient {
         var headers = buildAuthHeaders();
 
         var body = newBody();
-        body.put("grant_type", "refresh_token");
-        body.put("refresh_token", refreshToken.value);
+        body.put(GRANT_TYPE, REFRESH_TOKEN);
+        body.put(REFRESH_TOKEN, refreshToken.value);
 
         return """
                 {

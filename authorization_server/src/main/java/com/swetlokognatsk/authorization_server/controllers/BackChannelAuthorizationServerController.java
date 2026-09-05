@@ -26,17 +26,20 @@ import com.swetlokognatsk.authorization_server.ports.AccessTokenGenerator;
 import com.swetlokognatsk.authorization_server.ports.ClientSecretHasher;
 import com.swetlokognatsk.authorization_server.ports.Database;
 import com.swetlokognatsk.authorization_server.ports.RefreshTokenGenerator;
+import com.swetlokognatsk.oauth_db.RefreshTokenNotFoundException;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
-
+import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
 import static com.swetlokognatsk.authorization_server.AuthorizationServerApplication.*;
 
 @RestController
 public class BackChannelAuthorizationServerController {
 
     private static final String BASIC_AUTH_START = "Basic ";
-    private static final List<String> KNOWN_GRANT_TYPES = List.of("authorization_code");
+    private static final String AUTHORIZATION_CODE = "authorization_code";
+    private static final String REFRESH_TOKEN = "refresh_token";
+    private static final List<String> KNOWN_GRANT_TYPES = List.of(AUTHORIZATION_CODE, REFRESH_TOKEN);
 
     private static final String BEARER_TOKEN_TYPE = "Bearer";
 
@@ -58,41 +61,24 @@ public class BackChannelAuthorizationServerController {
     }
 
     @RequestMapping("/token")
-    public ResponseEntity<?> getToken(@RequestHeader(name = "Authorization", required = false) final String authHeader, @RequestParam(name = "grant_type") final String grantType, @RequestParam(name = "authorization_code") final String authorizationCode) {
+    public ResponseEntity<?> getToken(@RequestHeader(name = "Authorization", required = false) final String authHeader, @RequestParam(name = "grant_type") final String grantType, @RequestParam(name = AUTHORIZATION_CODE, required = false) final String authorizationCode, @RequestParam(name = REFRESH_TOKEN, required = false) final String refreshToken) {
         if (hasAuthHeader(authHeader)) {
             try {
                 var authCredentials = decodeAuthCredentials(authHeader);
                 validateAuthCredentials(authCredentials);
+                var clientId = authCredentials.clientId;
                 validateGrantType(grantType);
-                validateAuthorizationCode(authorizationCode);
-                var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
-                validateClientId(authCredentials, authorizationCodeEntity);
-                
-                var accessToken = generateAccessToken(authCredentials.clientId);
-                saveAccessToken(accessToken);
-
-                var body = switch (TOKEN_STRATEGY) {
-                    case SINGLE_ACCESS_TOKEN -> {
-                        yield buildAccessTokenBody(accessToken);
-                    }
-                    case REFRESH_AND_ACCESS_PAIR -> {
-                        var refreshToken = generateRefreshToken(authCredentials.clientId);
-                        saveRefreshToken(refreshToken);
-                        yield buildRefreshAndAccessTokensBody(accessToken, refreshToken);
-                    }
-                    default -> throw new IllegalArgumentException("unknown token strategy: %s".formatted(TOKEN_STRATEGY));
+                return switch (grantType) {
+                case AUTHORIZATION_CODE -> getTokenByAuthorizationCode(clientId, authorizationCode);
+                case REFRESH_TOKEN -> getTokenByRefreshToken(clientId, new RefreshTokenValue(refreshToken));
+                default -> throw new RuntimeException("unknown grant type");
                 };
-                return status(200).body(body);
             } catch (InvalidAuthCredentialsFormatException e) {
                 return badRequest().body("invalid auth credentials format. expected format: \"Authorization: Basic clientId:clientSecret\"");
             } catch (InvalidAuthCredentialsException e) {
                 return status(401).body("invalid auth credentials");
             } catch (UnknownGrantTypeException e) {
                 return unprocessableContent().body("unknown grant type: %s".formatted(grantType));
-            } catch (AuthorizationCodeNotFoundException e) {
-                return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
-            } catch (InvalidClientIdException e) {
-                return badRequest().body("clientId divergency");
             }
         } else {
             return status(401).body("auth credentials header is not found in request");
@@ -120,7 +106,7 @@ public class BackChannelAuthorizationServerController {
     private void validateAuthCredentials(final AuthCredentials authCredentials) throws InvalidAuthCredentialsException {
         Client client;
         try {
-            client = database.getClient(authCredentials.clientId);
+            client = database.getClientByClientId(authCredentials.clientId);
         } catch (ClientNotFoundException e) {
             throw new InvalidAuthCredentialsException();
         }
@@ -145,6 +131,34 @@ public class BackChannelAuthorizationServerController {
         return KNOWN_GRANT_TYPES.contains(grantType);
     }
 
+    private ResponseEntity<?> getTokenByAuthorizationCode(final String authClientId, final String authorizationCode) {
+        try {
+            validateAuthorizationCode(authorizationCode);
+            var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
+            validateClientId(authClientId, authorizationCodeEntity);
+
+            var accessToken = generateAccessToken(authClientId);
+            saveAccessToken(accessToken);
+
+            var body = switch (TOKEN_STRATEGY) {
+            case SINGLE_ACCESS_TOKEN -> {
+                yield buildAccessTokenBody(accessToken);
+            }
+            case REFRESH_AND_ACCESS_PAIR -> {
+                var refreshToken = generateRefreshToken(authClientId);
+                saveRefreshToken(refreshToken);
+                yield buildRefreshAndAccessTokensBody(accessToken, refreshToken);
+            }
+            default -> throw new IllegalArgumentException("unknown token strategy: %s".formatted(TOKEN_STRATEGY));
+            };
+            return status(200).body(body);
+        } catch (AuthorizationCodeNotFoundException e) {
+            return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
+        } catch (InvalidClientIdException e) {
+            return badRequest().body("clientId divergency");
+        }
+    }
+
     private void validateAuthorizationCode(final String authorizationCode) throws AuthorizationCodeNotFoundException {
         database.getAuthorizationCode(authorizationCode);
     }
@@ -157,28 +171,41 @@ public class BackChannelAuthorizationServerController {
         }
     }
 
-    private void validateClientId(final AuthCredentials authCredentials, final AuthorizationCode authorizationCode) throws InvalidClientIdException {
-        var credentialsClientId = authCredentials.clientId();
+    private void validateClientId(final String authClientId, final AuthorizationCode authorizationCode) throws InvalidClientIdException {
         var codeClientId = authorizationCode.clientId();
+        validateClientIds(authClientId, codeClientId);
+    }
 
-        if (!credentialsClientId.equals(codeClientId)) {
+    private void validateClientId(final String authClientId, final RefreshToken refreshToken) throws InvalidClientIdException {
+        var refreshTokenClientId = refreshToken.getClientId();
+        try {
+            var client = database.getClientById(refreshTokenClientId);
+            validateClientIds(authClientId, client.getClientId());
+        } catch (ClientNotFoundException e) {
+            throw new InvalidClientIdException();
+        }
+    }
+
+    private void validateClientIds(final String authClientId, final String anotherClientId) throws InvalidClientIdException {
+        if (!authClientId.equals(anotherClientId)) {
             throw new InvalidClientIdException();
         }
     }
 
     private AccessToken generateAccessToken(final String clientId) {
         try {
-            var client = database.getClient(clientId);
+            var client = database.getClientByClientId(clientId);
             var newAccessTokenValue = accessTokenGenerator.generateAccessToken();
             return new AccessToken(newAccessTokenValue, client.getId(), LocalDateTime.now(), ACCESS_TOKEN_EXPIRES_IN);
         } catch (ClientNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
+
     // DRY! though it's learning project
     private RefreshToken generateRefreshToken(final String clientId) {
         try {
-            var client = database.getClient(clientId);
+            var client = database.getClientByClientId(clientId);
             var newRefreshTokenValue = refreshTokenGenerator.generateRefreshToken();
             return new RefreshToken(newRefreshTokenValue, client.getId(), LocalDateTime.now(), REFRESH_TOKEN_EXPIRES_IN);
         } catch (ClientNotFoundException e) {
@@ -203,6 +230,29 @@ public class BackChannelAuthorizationServerController {
 
     private void saveRefreshToken(final RefreshToken refreshToken) {
         database.saveRefreshToken(refreshToken);
+    }
+
+    private ResponseEntity<?> getTokenByRefreshToken(final String authClientId, final RefreshTokenValue refreshTokenValue) {
+        if (refreshTokenValue == null) {
+            return badRequest().body("refresh token is not found in request");
+        }
+
+        try {
+            // TODO maybe pop?
+            var refreshToken = database.getRefreshToken(refreshTokenValue);
+
+            // TODO here i stopped
+            validateClientId(authClientId, refreshToken);
+        } catch (RefreshTokenNotFoundException e) {
+            return status(401).body("refresh token is not found: %s".formatted(refreshTokenValue));
+        } catch (InvalidClientIdException e) {
+            try {
+                database.removeRefreshToken(refreshTokenValue);
+            } catch (RefreshTokenNotFoundException innerE) {
+                e.addSuppressed(innerE);
+            }
+
+        }
     }
 
     private static record AuthCredentials(String clientId, String clientSecret) {

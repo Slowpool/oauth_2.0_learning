@@ -26,6 +26,10 @@ public class Client {
         return id;
     }
 
+    public String getClientId() {
+        return clientId;
+    }
+
     public String getSecretHash() {
         return secretHash;
     }
