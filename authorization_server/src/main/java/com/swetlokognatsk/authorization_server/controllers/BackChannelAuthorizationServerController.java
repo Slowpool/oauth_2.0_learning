@@ -21,6 +21,7 @@ import com.swetlokognatsk.authorization_server.models.AccessTokenBody;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.models.RefreshTokenBody;
+import com.swetlokognatsk.authorization_server.models.RefreshTokenResponse;
 import com.swetlokognatsk.authorization_server.ports.AccessTokenGenerator;
 import com.swetlokognatsk.authorization_server.ports.ClientSecretHasher;
 import com.swetlokognatsk.authorization_server.ports.Database;
@@ -70,7 +71,7 @@ public class BackChannelAuthorizationServerController {
                 var accessToken = generateAccessToken(authCredentials.clientId);
                 saveAccessToken(accessToken);
 
-                Object body = switch (TOKEN_STRATEGY) {
+                var body = switch (TOKEN_STRATEGY) {
                     case SINGLE_ACCESS_TOKEN -> {
                         yield buildAccessTokenBody(accessToken);
                     }
@@ -195,8 +196,9 @@ public class BackChannelAuthorizationServerController {
     }
 
     private RefreshTokenBody buildRefreshAndAccessTokensBody(final AccessToken accessToken, final RefreshToken refreshToken) {
-        // TODO
-        return new RefreshTokenBody();
+        var accessTokenBody = buildAccessTokenBody(accessToken);
+        var refreshTokenResponse = new RefreshTokenResponse(refreshToken.getValue().value(), refreshToken.getExpiresIn());
+        return new RefreshTokenBody(accessTokenBody, refreshTokenResponse);
     }
 
     private void saveRefreshToken(final RefreshToken refreshToken) {

@@ -108,17 +108,18 @@ public final class AppHttpClient {
         body.put("redirect_uri", Client.getRedirectURI());
 
         var result = sendHttpRequest(POST, uri, headers, body);
-        var jsonToken = switch (tokenStrategy) {
-        case SINGLE_ACCESS_TOKEN -> bodyUnlessError(result);
-        case REFRESH_AND_ACCESS_PAIR -> """
-                {
-                    "access_token": "accaccaccaccacc",
-                    "token_type": "Bearer",
-                    "refresh_token": "refrefrefrefrefref"
-                }
-                    """;
-        default -> throw new RuntimeException("unknown token strategy: %s".formatted(tokenStrategy));
-        };
+        var jsonToken = bodyUnlessError(result);
+        // var jsonToken = switch (tokenStrategy) {
+        // case SINGLE_ACCESS_TOKEN -> 
+        // case REFRESH_AND_ACCESS_PAIR -> """
+        //         {
+        //             "access_token": "accaccaccaccacc",
+        //             "token_type": "Bearer",
+        //             "refresh_token": "refrefrefrefrefref"
+        //         }
+        //             """;
+        // default -> throw new RuntimeException("unknown token strategy: %s".formatted(tokenStrategy));
+        // };
         return jsonToken;
     }
 

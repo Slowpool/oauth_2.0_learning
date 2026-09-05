@@ -7,6 +7,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.node.IntNode;
 import tools.jackson.databind.node.StringNode;
 
 class RefreshAndAccessTokensPairDeserializer extends StdDeserializer<RefreshAndAccessTokensPair> {
@@ -21,15 +22,19 @@ class RefreshAndAccessTokensPairDeserializer extends StdDeserializer<RefreshAndA
 
     public RefreshAndAccessTokensPair deserialize(final JsonParser parser, final DeserializationContext ctx) throws JacksonException {
         
-        var jsonNode = parser.readValueAsTree();
-
-        var accessTokenValue = ((StringNode) jsonNode.get("access_token")).asString();
-        var accessTokenTypeValue = ((StringNode) jsonNode.get("token_type")).asString();
+        var jsonRoot = parser.readValueAsTree();
+        
+        var accessTokenRoot = jsonRoot.get("accessToken");
+        var accessTokenValue = ((StringNode) accessTokenRoot.get("accessToken")).asString();
+        var accessTokenTypeValue = ((StringNode) accessTokenRoot.get("type")).asString();
+        var accessTokenExpiresIn = ((IntNode) accessTokenRoot.get("expiresIn")).intValue();
         // TODO parse expiresIn
-        var accessToken = new AccessToken(accessTokenValue, accessTokenTypeValue, 1937);
+        var accessToken = new AccessToken(accessTokenValue, accessTokenTypeValue, accessTokenExpiresIn);
 
-        var refreshTokenValue = ((StringNode) jsonNode.get("refresh_token")).asString();
-        var refreshToken = new RefreshToken(refreshTokenValue);
+        var refreshTokenRoot = jsonRoot.get("refreshToken");
+        var refreshTokenValue = ((StringNode) refreshTokenRoot.get("refreshToken")).asString();
+        var expiresIn = ((IntNode) refreshTokenRoot.get("expiresIn")).intValue();
+        var refreshToken = new RefreshToken(refreshTokenValue, expiresIn);
 
         return new RefreshAndAccessTokensPair(refreshToken, accessToken);
     }
