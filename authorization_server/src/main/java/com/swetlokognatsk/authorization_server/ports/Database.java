@@ -1,5 +1,7 @@
 package com.swetlokognatsk.authorization_server.ports;
 
+import java.util.List;
+import java.util.Set;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
@@ -10,6 +12,7 @@ import com.swetlokognatsk.oauth_db.RefreshTokenNotFoundException;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
 import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
 
 public interface Database {
     Client getClientByClientId(String clientId) throws ClientNotFoundException;
@@ -37,5 +40,7 @@ public interface Database {
     void removeRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException;
 
     RefreshToken popRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException;
+
+    Set<ScopeEntity> getScopeEntities(List<String> scopes);
 
 }

@@ -1,7 +1,10 @@
 package com.swetlokognatsk.authorization_server.adapters;
 
+import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Repository;
 import com.swetlokognatsk.authorization_server.daos.ClientsDao;
+import com.swetlokognatsk.authorization_server.daos.ScopesDao;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
@@ -17,6 +20,7 @@ import com.swetlokognatsk.oauth_db.daos.RefreshTokensDao;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
 import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
 
 @Repository
 public class JpaDatabase implements Database {
@@ -26,13 +30,15 @@ public class JpaDatabase implements Database {
     private final AuthorizationCodesRepository authorizationCodesRepository;
     private final AccessTokensDao accessTokensDao;
     private final RefreshTokensDao refreshTokensDao;
+    private final ScopesDao scopesDao;
 
-    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository, final AccessTokensDao AccessTokensDao, final RefreshTokensDao refreshTokensDao) {
+    public JpaDatabase(final ClientsDao clientsDao, final AuthorizationRequestsRepository authorizationRequestsRepository, final AuthorizationCodesRepository authorizationCodesRepository, final AccessTokensDao AccessTokensDao, final RefreshTokensDao refreshTokensDao, final ScopesDao scopesDao) {
         this.clientsDao = clientsDao;
         this.authorizationRequestsRepository = authorizationRequestsRepository;
         this.authorizationCodesRepository = authorizationCodesRepository;
         this.accessTokensDao = AccessTokensDao;
         this.refreshTokensDao = refreshTokensDao;
+        this.scopesDao = scopesDao;
     }
 
     public Client getClientByClientId(final String clientId) throws ClientNotFoundException {
@@ -79,13 +85,18 @@ public class JpaDatabase implements Database {
         return refreshTokensDao.findByValue(refreshTokenValue);
     }
 
-    public void removeRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
+    public void removeRefreshToken(final RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
         refreshTokensDao.remove(refreshTokenValue);
     }
 
-    public RefreshToken popRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
+    public RefreshToken popRefreshToken(final RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
         var refreshToken = refreshTokensDao.findByValue(refreshTokenValue);
         refreshTokensDao.remove(refreshTokenValue);
         return refreshToken;
     }
+
+    public Set<ScopeEntity> getScopeEntities(final List<String> scopes) {
+        return scopesDao.findAllByValues(scopes);
+    }
+
 }

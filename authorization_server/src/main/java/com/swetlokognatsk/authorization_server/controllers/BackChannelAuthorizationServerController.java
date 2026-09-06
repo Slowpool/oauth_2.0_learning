@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -34,7 +33,6 @@ import com.swetlokognatsk.oauth_db.models.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
 import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
 import com.swetlokognatsk.oauth_db.models.ScopeEntity;
-
 import static com.swetlokognatsk.authorization_server.AuthorizationServerApplication.*;
 
 @RestController
@@ -142,7 +140,7 @@ public class BackChannelAuthorizationServerController {
             validateClientId(authClientId, authorizationCodeEntity);
 
             var scopes = authorizationCodeEntity.scopes();
-            
+
             var accessToken = generateAccessToken(authClientId, scopes);
             saveAccessToken(accessToken);
 
@@ -199,36 +197,39 @@ public class BackChannelAuthorizationServerController {
     }
 
     private AccessToken generateAccessToken(final String clientId, final List<String> scopes) {
-        try {
-            var client = database.getClientByClientId(clientId);
-            var newAccessTokenValue = accessTokenGenerator.generateAccessToken();
-            return new AccessToken(newAccessTokenValue, client.getId(), LocalDateTime.now(), ACCESS_TOKEN_EXPIRES_IN);
-        } catch (ClientNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        var scopeEntities = getScopeEntities(scopes);
+        return generateAccessToken(clientId, scopeEntities);
+    }
+
+    private Set<ScopeEntity> getScopeEntities(final List<String> scopes) {
+        return database.getScopeEntities(scopes);
     }
 
     private AccessToken generateAccessToken(final String clientId, final Set<ScopeEntity> scopes) {
-        // TODO how to attach many-to-many entities to accessToken?
-        return null;
+        try {
+            var client = database.getClientByClientId(clientId);
+            var newAccessTokenValue = accessTokenGenerator.generateAccessToken();
+            return new AccessToken(newAccessTokenValue, client.getId(), LocalDateTime.now(), ACCESS_TOKEN_EXPIRES_IN, scopes);
+        } catch (ClientNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // DRY! though it's learning project
     private RefreshToken generateRefreshToken(final String clientId, final List<String> scopes) {
+        var scopeEntities = getScopeEntities(scopes);
+        return generateRefreshToken(clientId, scopeEntities);
+    }
+
+    private RefreshToken generateRefreshToken(final String clientId, final Set<ScopeEntity> scopes) {
         try {
             var client = database.getClientByClientId(clientId);
             var newRefreshTokenValue = refreshTokenGenerator.generateRefreshToken();
-            return new RefreshToken(newRefreshTokenValue, client.getId(), LocalDateTime.now(), REFRESH_TOKEN_EXPIRES_IN);
+            return new RefreshToken(newRefreshTokenValue, client.getId(), LocalDateTime.now(), REFRESH_TOKEN_EXPIRES_IN, scopes);
         } catch (ClientNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
-
-    private RefreshToken generateRefreshToken(final String clientId, final Set<ScopeEntity> scopes) {
-        // TODO how to bla bla
-        return null;
-    }
-
 
     private void saveAccessToken(final AccessToken accessToken) {
         database.saveAccessToken(accessToken);
