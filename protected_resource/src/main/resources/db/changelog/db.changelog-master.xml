@@ -39,4 +39,6 @@
 
    <include file="1788612997_add_expires_in_to_refresh_tokens.xml" relativeToChangelogFile="true" />
 
+   <include file="1788685541_add_clients_scopes_table.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

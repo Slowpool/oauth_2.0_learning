@@ -2,6 +2,9 @@ package com.swetlokognatsk.authorization_server.models;
 
 import java.util.List;
 import java.util.Set;
+
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
+import com.swetlokognatsk.oauth_db.models.Scopes;
 import jakarta.persistence.*;
 
 @Entity
@@ -21,6 +24,10 @@ public class Client {
     @OneToMany
     @JoinColumn(name = "client_id")
     List<RedirectUri> redirectUris;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(inverseJoinColumns = @JoinColumn(name = "scope_id"))
+    Set<ScopeEntity> scopes;
 
     public int getId() {
         return id;

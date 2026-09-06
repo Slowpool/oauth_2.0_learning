@@ -2,7 +2,9 @@ package com.swetlokognatsk.authorization_server.controllers;
 
 import java.util.UUID;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.ResponseEntity.*;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -175,12 +177,12 @@ public class FrontChannelAuthorizationServerController {
     }
 
     @RequestMapping("/clients-test2")
-    public String clientsTest2() {
+    public ResponseEntity<?> clientsTest2() {
         try {
             var client = database.getClientByClientId("client-1");
-            return "done";
+            return ok("done");
         } catch (ClientNotFoundException e) {
-            return "fail: " + e.getMessage();
+            return internalServerError().body("fail: " + e.getMessage());
         }
     }
 }
