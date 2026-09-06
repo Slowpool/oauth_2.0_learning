@@ -3,6 +3,8 @@ package com.swetlokognatsk.authorization_server.controllers;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,6 +33,8 @@ import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
 import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
+
 import static com.swetlokognatsk.authorization_server.AuthorizationServerApplication.*;
 
 @RestController
@@ -137,7 +141,9 @@ public class BackChannelAuthorizationServerController {
             var authorizationCodeEntity = popAuthorizationCode(authorizationCode);
             validateClientId(authClientId, authorizationCodeEntity);
 
-            var accessToken = generateAccessToken(authClientId);
+            var scopes = authorizationCodeEntity.scopes();
+            
+            var accessToken = generateAccessToken(authClientId, scopes);
             saveAccessToken(accessToken);
 
             var body = switch (TOKEN_STRATEGY) {
@@ -145,7 +151,7 @@ public class BackChannelAuthorizationServerController {
                 yield buildAccessTokenBody(accessToken);
             }
             case REFRESH_AND_ACCESS_PAIR -> {
-                var refreshToken = generateRefreshToken(authClientId);
+                var refreshToken = generateRefreshToken(authClientId, scopes);
                 saveRefreshToken(refreshToken);
                 yield buildRefreshAndAccessTokensBody(accessToken, refreshToken);
             }
@@ -192,7 +198,7 @@ public class BackChannelAuthorizationServerController {
         }
     }
 
-    private AccessToken generateAccessToken(final String clientId) {
+    private AccessToken generateAccessToken(final String clientId, final List<String> scopes) {
         try {
             var client = database.getClientByClientId(clientId);
             var newAccessTokenValue = accessTokenGenerator.generateAccessToken();
@@ -202,8 +208,13 @@ public class BackChannelAuthorizationServerController {
         }
     }
 
+    private AccessToken generateAccessToken(final String clientId, final Set<ScopeEntity> scopes) {
+        // TODO how to attach many-to-many entities to accessToken?
+        return null;
+    }
+
     // DRY! though it's learning project
-    private RefreshToken generateRefreshToken(final String clientId) {
+    private RefreshToken generateRefreshToken(final String clientId, final List<String> scopes) {
         try {
             var client = database.getClientByClientId(clientId);
             var newRefreshTokenValue = refreshTokenGenerator.generateRefreshToken();
@@ -212,6 +223,12 @@ public class BackChannelAuthorizationServerController {
             throw new RuntimeException(e);
         }
     }
+
+    private RefreshToken generateRefreshToken(final String clientId, final Set<ScopeEntity> scopes) {
+        // TODO how to bla bla
+        return null;
+    }
+
 
     private void saveAccessToken(final AccessToken accessToken) {
         database.saveAccessToken(accessToken);
@@ -242,10 +259,10 @@ public class BackChannelAuthorizationServerController {
 
             validateClientId(authClientId, refreshToken);
 
-            var accessToken = generateAccessToken(authClientId);
+            var accessToken = generateAccessToken(authClientId, refreshToken.getScopes());
             saveAccessToken(accessToken);
 
-            var newRefreshToken = generateRefreshToken(authClientId);
+            var newRefreshToken = generateRefreshToken(authClientId, refreshToken.getScopes());
             saveRefreshToken(newRefreshToken);
 
             var refreshTokenBody = buildRefreshAndAccessTokensBody(accessToken, newRefreshToken);

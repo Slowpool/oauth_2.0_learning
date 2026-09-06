@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="19" author="slowpool">
+        <createTable tableName="refresh_tokens_scopes">
+            <column name="refresh_token_id" type="int">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="scope_id" type="int">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            constraintName="refresh_tokens_scopes_refresh_token_id"
+            baseTableName="refresh_tokens_scopes"
+            baseColumnNames="refresh_token_id"
+            referencedTableName="refresh_tokens"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"
+        />
+
+        <addForeignKeyConstraint
+            constraintName="refresh_tokens_scopes_scope_id"
+            baseTableName="refresh_tokens_scopes"
+            baseColumnNames="scope_id"
+            referencedTableName="scopes"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"
+        />
+    </changeSet>
+
+</databaseChangeLog>

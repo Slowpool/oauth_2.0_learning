@@ -41,4 +41,6 @@
 
    <include file="1788685541_add_clients_scopes_table.xml" relativeToChangelogFile="true" />
 
+   <include file="1788715690_add_refresh_tokens_scopes_table.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

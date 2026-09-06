@@ -108,7 +108,7 @@ public class FrontChannelAuthorizationServerController {
             validateScopes(client, permittedScopes);
 
             var code = generateCode();
-            saveAuthorizationCode(requestId, code, clientId);
+            saveAuthorizationCode(requestId, code, clientId, permittedScopes);
 
             redirectUri = UriBuilder.buildRedirectUriOnSuccess(code, authorizationRequest);
         } catch (UnsupportedResponseTypeException e) {
@@ -129,8 +129,8 @@ public class FrontChannelAuthorizationServerController {
         return database.getClientByClientId(clientId);
     }
 
-    private void saveAuthorizationCode(final String requestId, final String code, final String clientId) {
-        var authorizationCode = new AuthorizationCode(requestId, code, clientId);
+    private void saveAuthorizationCode(final String requestId, final String code, final String clientId, final List<String> scopes) {
+        var authorizationCode = new AuthorizationCode(requestId, code, clientId, scopes);
         database.saveAuthorizationCode(authorizationCode);
     }
 
