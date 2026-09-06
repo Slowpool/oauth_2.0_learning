@@ -1,5 +1,8 @@
 package com.swetlokognatsk.authorization_server.controllers;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.ResponseEntity.*;
@@ -14,6 +17,7 @@ import com.swetlokognatsk.authorization_server.daos.ClientsDao;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidRedirectUriException;
+import com.swetlokognatsk.authorization_server.exceptions.InvalidScopeException;
 import com.swetlokognatsk.authorization_server.exceptions.UnsupportedResponseTypeException;
 import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
@@ -21,6 +25,7 @@ import com.swetlokognatsk.authorization_server.models.Client;
 import com.swetlokognatsk.authorization_server.models.RedirectUri;
 import com.swetlokognatsk.authorization_server.ports.Database;
 import com.swetlokognatsk.authorization_server.services.UriBuilder;
+import com.swetlokognatsk.oauth_db.models.ScopeEntity;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,6 +38,8 @@ public class FrontChannelAuthorizationServerController {
     private static final String AUTHORIZATION_ENDPOINT = "/authorize";
     private static final String APPROVE_AUTH_ENDPOINT = "/approve-authorization";
     private static final String DENY_AUTH_ENDPOINT = "/deny-authorization";
+
+    private static final String SCOPE_SEPARATOR = " ";
 
     private final ApplicationContext ctx;
     private final Database database;
@@ -48,17 +55,21 @@ public class FrontChannelAuthorizationServerController {
     }
 
     @GetMapping(AUTHORIZATION_ENDPOINT)
-    public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam final String state, final Model model) {
-
+    public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam final String state, @RequestParam final String scope, final Model model) {
         String view;
-
         try {
-            var client = database.getClientByClientId(clientId);
+            var client = getClientByClientId(clientId);
             validateClient(client, redirectUri);
-            var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType, state);
-            model.addAttribute("requestId", requestId);
             model.addAttribute("clientId", clientId);
             model.addAttribute("redirectUri", redirectUri);
+
+            validateScope(client, scope);
+            var scopes = parseScopes(scope);
+            model.addAttribute("scopes", scopes);
+
+            var requestId = saveAuthorizationRequest(database, clientId, redirectUri, responseType, state);
+            model.addAttribute("requestId", requestId);
+
             model.addAttribute("approveEndpoint", APPROVE_AUTH_ENDPOINT);
             model.addAttribute("denyEndpoint", DENY_AUTH_ENDPOINT);
             view = "approve";
@@ -70,12 +81,16 @@ public class FrontChannelAuthorizationServerController {
             model.addAttribute("error", "incorrect redirectUri: %s".formatted(redirectUri));
             response.setStatus(UNPROCESSABLE_CONTENT.value());
             view = "error";
+        } catch (InvalidScopeException e) {
+            model.addAttribute("error", "invalid scopes requested: %s".formatted(scope));
+            response.setStatus(BAD_REQUEST.value());
+            view = "error";
         }
         return new ModelAndView(view, model.asMap());
     }
 
     @PostMapping(APPROVE_AUTH_ENDPOINT)
-    public RedirectView approveAuthorization(final HttpServletResponse response, @RequestParam final String requestId) {
+    public RedirectView approveAuthorization(final HttpServletResponse response, @RequestParam final String requestId, @RequestParam final List<String> permittedScopes) {
         AuthorizationRequest authorizationRequest;
         try {
             validateRequestId(requestId);
@@ -88,17 +103,30 @@ public class FrontChannelAuthorizationServerController {
         String redirectUri;
         try {
             validateResponseType(authorizationRequest.responseType());
+            var clientId = authorizationRequest.clientId();
+            var client = getClientByClientId(clientId);
+            validateScopes(client, permittedScopes);
 
             var code = generateCode();
-            saveAuthorizationCode(requestId, code, authorizationRequest.clientId());
+            saveAuthorizationCode(requestId, code, clientId);
 
             redirectUri = UriBuilder.buildRedirectUriOnSuccess(code, authorizationRequest);
         } catch (UnsupportedResponseTypeException e) {
             // TODO how client should react to it?
             redirectUri = UriBuilder.buildRedirectUriOnUnsupportedResponseType(authorizationRequest);
         }
+        // ofc redirects should be further, but ain't gonna bother myself with it
+        catch (ClientNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidScopeException e) {
+            throw new RuntimeException(e);
+        }
 
         return new RedirectView(redirectUri);
+    }
+
+    private Client getClientByClientId(final String clientId) throws ClientNotFoundException {
+        return database.getClientByClientId(clientId);
     }
 
     private void saveAuthorizationCode(final String requestId, final String code, final String clientId) {
@@ -152,17 +180,59 @@ public class FrontChannelAuthorizationServerController {
      * @return String requestId
      */
     private String saveAuthorizationRequest(final Database database, final String clientId, final String redirectUri, final String responseType, final String state) {
-        String requestId = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID()
+                .toString();
         var authorizationRequest = new AuthorizationRequest(requestId, clientId, redirectUri, responseType, state);
         database.saveAuthorizationRequest(authorizationRequest);
         return requestId;
     }
 
     private void validateClient(final Client client, final String receivedRedirectUri) throws InvalidRedirectUriException {
-        var clientRedirectUris = client.getRedirectUris().stream().map((RedirectUri redirectUri) -> redirectUri.uri).toList();
+        var clientRedirectUris = client.getRedirectUris()
+                .stream()
+                .map((RedirectUri redirectUri) -> redirectUri.uri)
+                .toList();
         if (!clientRedirectUris.contains(receivedRedirectUri)) {
             throw new InvalidRedirectUriException();
         }
+    }
+
+    private void validateScope(final Client client, final String scope) throws InvalidScopeException {
+        if (scope == null) {
+            throw new InvalidScopeException();
+        }
+
+        var parsedScopes = parseScopes(scope);
+        validateScopes(client, parsedScopes);
+    }
+
+    private void validateScopes(final Client client, final List<String> scopes) throws InvalidScopeException {
+        if (clientAsksTooManyScopes(client.getScopes(), scopes)) {
+            throw new InvalidScopeException();
+        }
+
+        if (!clientHasTheseScopes(client, scopes)) {
+            throw new InvalidScopeException();
+        }
+    }
+
+    private List<String> parseScopes(final String scope) {
+        return Arrays.asList(scope.toLowerCase()
+                .split(SCOPE_SEPARATOR));
+    }
+
+    private boolean clientAsksTooManyScopes(final Set<ScopeEntity> clientScopes, final List<String> parsedScopes) {
+        return parsedScopes.size() > clientScopes.size();
+    }
+
+    private boolean clientHasTheseScopes(final Client client, final List<String> scopes) {
+        var clientScopes = client.getScopes()
+                .stream()
+                .map((ScopeEntity scopeEntity) -> scopeEntity.getName()
+                        .toLowerCase())
+                .toList();
+
+        return clientScopes.containsAll(scopes);
     }
 
     @RequestMapping("/clients-test")

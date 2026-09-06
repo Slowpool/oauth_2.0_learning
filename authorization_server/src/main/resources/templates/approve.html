@@ -4,6 +4,15 @@ Approve this client?
 </br>
 </br>
 <form method="POST" th:action="|${approveEndpoint}|">
+    the client wanna you allowed it to do this stuff (you can decline some permissions):
+    <select name="permittedScopes" multiple="multiple">
+        <option
+            th:each="item : ${scopes}"
+            th:value="${item}"
+            th:text="${item}"
+            th:selected="true"
+        ></option>
+    </select>
     <button type="submit">Approve</button>
     <input name="requestId" type="hidden" th:value="${requestId}">
 </form>

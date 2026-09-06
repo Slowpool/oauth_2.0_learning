@@ -13,6 +13,8 @@ import com.swetlokognatsk.client.external_services.ProtectedResource;
 
 public class UriBuilder {
 
+    private static final String SCOPE = "scope";
+    
     private static String buildURI(final String base, final Map<String, String> options, final String hash, final boolean encode) {
         var uri = UriComponentsBuilder.fromUriString(base);
         uri.replaceQuery("");
@@ -31,7 +33,7 @@ public class UriBuilder {
         return uri.build(encode).toUriString();
     }
 
-    public static String buildAuthorizationURI(final String state) {
+    public static String buildAuthorizationURI(final String state, final String scope) {
         var baseUri = AuthorizationServer.getExternalAuthorizationEndpoint();
 
         var options = new HashMap<String, String>();
@@ -40,6 +42,8 @@ public class UriBuilder {
         var encodedRedirectUri = getClientRedirectURI(true);
         options.put("redirect_uri", encodedRedirectUri);
         options.put("state", state);
+        var encodedScope = UriUtils.encode(scope, StandardCharsets.UTF_8);
+        options.put(SCOPE, encodedScope);
 
         var authorizationUri = buildURI(baseUri, options, null, false);
         return authorizationUri;

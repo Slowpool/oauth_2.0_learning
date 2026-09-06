@@ -69,6 +69,8 @@ public class ClientApplication {
 
 	private static final String TOKEN_STRATEGY = "TOKEN_STRATEGY";
 
+	private static final String FULL_WORDS_SCOPES = "read write delete";
+
 	private final Service service;
 	private final MapSessionRepository sessionRepository;
 
@@ -123,7 +125,7 @@ public class ClientApplication {
 	public RedirectView singInViaGipHub(@CookieValue(SESSION_COOKIE) final String sessionId) {
 		var state = createStateAndWriteToSession(sessionId);
 
-		var authEndpointURI = UriBuilder.buildAuthorizationURI(state);
+		var authEndpointURI = UriBuilder.buildAuthorizationURI(state, FULL_WORDS_SCOPES);
 		var redirect = new RedirectView(authEndpointURI);
 		return redirect;
 	}
@@ -179,8 +181,7 @@ public class ClientApplication {
 				e.addSuppressed(innerE);
 				return error(e.getMessage());
 			}
-		}
-		catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 			throw new RuntimeException("interrupted exception");
 		}
 	}

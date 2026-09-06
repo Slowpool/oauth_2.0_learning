@@ -3,7 +3,6 @@ package com.swetlokognatsk.client;
 import static org.junit.jupiter.api.Assertions.*;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -122,5 +121,21 @@ class ClientApplicationTests {
 	@Test
 	public void uuidTest() {
 		assertEquals(UUID.randomUUID().toString().replace("-", ""), null);
+	}
+
+	@Test
+	public void splitStringTest() {
+		String empty = "";
+		assertEquals(1, empty.split(" ").length);
+
+		String singleWhitespace = " ";
+		assertEquals(1, singleWhitespace.split("").length);
+		assertEquals(0, singleWhitespace.split(" ").length);
+
+		String foo = "foo";
+		assertEquals(0, foo.split(foo).length);
+
+		var what = foo.split(" ");
+		assertEquals(1, what.length);
 	}
 }

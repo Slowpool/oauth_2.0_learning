@@ -2,7 +2,6 @@ package com.swetlokognatsk.authorization_server.models;
 
 import java.util.List;
 import java.util.Set;
-
 import com.swetlokognatsk.oauth_db.models.ScopeEntity;
 import com.swetlokognatsk.oauth_db.models.Scopes;
 import jakarta.persistence.*;
@@ -43,6 +42,10 @@ public class Client {
 
     public List<RedirectUri> getRedirectUris() {
         return redirectUris;
+    }
+
+    public Set<ScopeEntity> getScopes() {
+        return scopes;
     }
 
     public Client() {
