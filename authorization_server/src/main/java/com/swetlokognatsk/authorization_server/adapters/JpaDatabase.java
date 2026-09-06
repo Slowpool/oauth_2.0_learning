@@ -83,4 +83,9 @@ public class JpaDatabase implements Database {
         refreshTokensDao.remove(refreshTokenValue);
     }
 
+    public RefreshToken popRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException {
+        var refreshToken = refreshTokensDao.findByValue(refreshTokenValue);
+        refreshTokensDao.remove(refreshTokenValue);
+        return refreshToken;
+    }
 }

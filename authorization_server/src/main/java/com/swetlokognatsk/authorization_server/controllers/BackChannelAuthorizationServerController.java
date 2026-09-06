@@ -151,7 +151,7 @@ public class BackChannelAuthorizationServerController {
             }
             default -> throw new IllegalArgumentException("unknown token strategy: %s".formatted(TOKEN_STRATEGY));
             };
-            return status(200).body(body);
+            return ok(body);
         } catch (AuthorizationCodeNotFoundException e) {
             return badRequest().body("authorization code is not found: %s".formatted(authorizationCode));
         } catch (InvalidClientIdException e) {
@@ -238,11 +238,18 @@ public class BackChannelAuthorizationServerController {
         }
 
         try {
-            // TODO maybe pop?
-            var refreshToken = database.getRefreshToken(refreshTokenValue);
+            var refreshToken = database.popRefreshToken(refreshTokenValue);
 
-            // TODO here i stopped
             validateClientId(authClientId, refreshToken);
+
+            var accessToken = generateAccessToken(authClientId);
+            saveAccessToken(accessToken);
+
+            var newRefreshToken = generateRefreshToken(authClientId);
+            saveRefreshToken(newRefreshToken);
+
+            var refreshTokenBody = buildRefreshAndAccessTokensBody(accessToken, newRefreshToken);
+            return ok(refreshTokenBody);
         } catch (RefreshTokenNotFoundException e) {
             return status(401).body("refresh token is not found: %s".formatted(refreshTokenValue));
         } catch (InvalidClientIdException e) {
@@ -251,7 +258,7 @@ public class BackChannelAuthorizationServerController {
             } catch (RefreshTokenNotFoundException innerE) {
                 e.addSuppressed(innerE);
             }
-
+            return status(401).body("invalid clientId: %s".formatted(authClientId));
         }
     }
 

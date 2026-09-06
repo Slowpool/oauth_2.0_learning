@@ -36,4 +36,6 @@ public interface Database {
 
     void removeRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException;
 
+    RefreshToken popRefreshToken(RefreshTokenValue refreshTokenValue) throws RefreshTokenNotFoundException;
+
 }

@@ -133,37 +133,27 @@ public final class AppHttpClient {
     }
 
     public static String sendTokenRefreshingRequest(final RefreshToken refreshToken) throws IOException, InterruptedException {
+        var uri = AuthorizationServer.getInternalTokenEndpoint();
+
         var headers = buildAuthHeaders();
 
         var body = newBody();
         body.put(GRANT_TYPE, REFRESH_TOKEN);
         body.put(REFRESH_TOKEN, refreshToken.value);
 
-        return """
-                {
-                    "access_token": "newacnewacnewacnewac",
-                    "token_type": "Bearer",
-                    "refresh_token": "newrefnewrefnewrefnewref"
-                }
-                    """;
-        // TODO return real raw json
-        // var result = sendHttpRequest(POST, uri, new HashMap<>(), body);
-        // if (result.statusCode() >= 200 && result.statusCode() <= 299) {
-        //     return "latch";
-        // }
-        // else {
-        //     throw new IOException("auth returned error. status: %d, message: %s".formatted(result.statusCode(), result.body()));
-        // }
+        var result = sendHttpRequest(POST, uri, headers, body);
+        var jsonTokens = bodyUnlessError(result);
+        return jsonTokens;
     }
 
-    private static boolean isFirstTry = true;
+    private static boolean isFirstProtectedResourceFetching = true;
 
     public static String fetchProtectedResource(final AccessToken accessToken) throws IOException, InterruptedException {
-        // // simulating the access token expiring
-        // if (isFirstTry) {
-        //     isFirstTry = false;
-        //     throw new IOException("access token has expired");
-        // }
+        // simulating the access token expiring
+        if (isFirstProtectedResourceFetching) {
+            isFirstProtectedResourceFetching = false;
+            throw new IOException("access token has expired");
+        }
 
         var uri = ProtectedResource.getFetchResourceEndpoint();
 

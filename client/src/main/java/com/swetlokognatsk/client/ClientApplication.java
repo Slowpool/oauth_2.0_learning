@@ -171,7 +171,7 @@ public class ClientApplication {
 
 		try {
 			return fetchProtectedResourceImpl(accessToken);
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			// TODO ensure this scenario works
 			try {
 				return updateRefreshTokenAndFetchResourceAgain(sessionId);
@@ -179,6 +179,9 @@ public class ClientApplication {
 				e.addSuppressed(innerE);
 				return error(e.getMessage());
 			}
+		}
+		catch (InterruptedException e) {
+			throw new RuntimeException("interrupted exception");
 		}
 	}
 
