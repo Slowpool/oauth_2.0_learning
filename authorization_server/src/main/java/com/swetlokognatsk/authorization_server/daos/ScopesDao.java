@@ -19,7 +19,6 @@ public class ScopesDao {
         // minor hack, learning project after all
         var scopesInUpperCase = toUpperCase(scopes);
 
-        // TODO grasp it
         var query = entityManager.getCriteriaBuilder()
                 .createQuery(ScopeEntity.class);
         var root = query.from(ScopeEntity.class);

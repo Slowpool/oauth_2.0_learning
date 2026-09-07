@@ -54,7 +54,6 @@ public class FrontChannelAuthorizationServerController {
         return "hello";
     }
 
-    // TODO response_type is who?
     @GetMapping(AUTHORIZATION_ENDPOINT)
     public ModelAndView authorize(final HttpServletResponse response, @RequestParam(name = "client_id") final String clientId, @RequestParam(name = "redirect_uri") final String redirectUri, @RequestParam(name = "response_type", required = false) final String responseType, @RequestParam final String state, @RequestParam final String scope, final Model model) {
         String view;
@@ -113,7 +112,6 @@ public class FrontChannelAuthorizationServerController {
 
             redirectUri = UriBuilder.buildRedirectUriOnSuccess(code, authorizationRequest);
         } catch (UnsupportedResponseTypeException e) {
-            // TODO how client should react to it?
             redirectUri = UriBuilder.buildRedirectUriOnUnsupportedResponseType(authorizationRequest);
         }
         // ofc redirects should be further, but ain't gonna bother myself with it
@@ -153,8 +151,6 @@ public class FrontChannelAuthorizationServerController {
         try {
             validateRequestId(requestId);
             var authorizationRequest = database.popAuthorizationRequest(requestId);
-            // TODO eliminate UriBuilder and use RedirectView attributes instead
-            // TODO how client should react to it?
             var redirectUri = UriBuilder.buildRedirectUriOnAccessDenied(authorizationRequest);
             return new RedirectView(redirectUri);
         } catch (AuthorizationRequestNotFoundException e) {

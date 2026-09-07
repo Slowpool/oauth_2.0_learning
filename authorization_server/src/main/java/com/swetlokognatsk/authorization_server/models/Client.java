@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "clients")
 public class Client {
-    // TODO add to db "CLIENT_ID_1", "CLIENT_SECRET_1", scopes= { "foo", "bar" }
 
     @Id
     int id;

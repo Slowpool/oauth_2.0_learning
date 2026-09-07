@@ -17,7 +17,6 @@ public class RedisAuthorizationRequestsRepository extends RedisRepository implem
 
     public void save(final AuthorizationRequest authorizationRequest) {
         var serializedRequest = serializer.serializeAuthorizationRequest(authorizationRequest);
-        // TODO why such a weird interface (.opsForValue())?
         var key = buildKey(authorizationRequest);
         redisTemplate.opsForValue().set(key, serializedRequest);
     }

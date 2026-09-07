@@ -6,7 +6,6 @@ import com.swetlokognatsk.authorization_server.daos.ClientsDao;
 import com.swetlokognatsk.oauth_db.daos.AccessTokensDao;
 import com.swetlokognatsk.oauth_db.daos.RefreshTokensDao;
 
-// TODO difference between @SpringBootConfiguration and @Configuration?
 @Configuration
 public class Config {
 
