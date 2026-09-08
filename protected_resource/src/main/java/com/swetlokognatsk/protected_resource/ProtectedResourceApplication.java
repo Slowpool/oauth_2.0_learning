@@ -17,12 +17,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-// TODO what is `nextval('words_id_seq'::regclass)`???
-// Column |          Type          | Collation | Nullable |              Default              
-// --------+------------------------+-----------+----------+-----------------------------------
-// id     | integer                |           | not null | nextval('words_id_seq'::regclass)
-
-// TODO is it possible to configure vs code to run all 4 debuggers
 @SpringBootApplication
 @EntityScan(basePackages = { "com.swetlokognatsk.protected_resource", "com.swetlokognatsk.oauth_db.models" })
 @RestController
