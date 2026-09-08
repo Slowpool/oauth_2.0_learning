@@ -171,7 +171,6 @@ public class ClientApplication {
 		try {
 			return fetchProtectedResourceImpl(accessToken);
 		} catch (IOException e) {
-			// TODO ensure this scenario works
 			try {
 				return updateRefreshTokenAndFetchResourceAgain(sessionId);
 			} catch (TokenStrategyDoesNotSupportRefreshTokenException innerE) {
