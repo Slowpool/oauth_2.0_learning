@@ -13,7 +13,8 @@
             "request": "attach",
             "hostName": "localhost",
             "port": "5015",
-            "projectName": "authorization_server"
+            "projectName": "authorization_server",
+            "preLaunchTask": "WaitForBootstrap"
         },
         {
             "type": "java",
@@ -21,7 +22,8 @@
             "request": "attach",
             "hostName": "localhost",
             "port": "5016",
-            "projectName": "client"
+            "projectName": "client",
+            "preLaunchTask": "WaitForBootstrap"
         },
         {
             "type": "java",
@@ -29,7 +31,19 @@
             "request": "attach",
             "hostName": "localhost",
             "port": "5017",
-            "projectName": "protected_resource"
+            "projectName": "protected_resource",
+            "preLaunchTask": "WaitForBootstrap"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "debug",
+            "configurations": [
+                "Current File",
+                "AuthorizationServerApplication",
+                "ClientApplication",
+                "ProtectedResourceApplication"
+            ]
         }
     ]
 }

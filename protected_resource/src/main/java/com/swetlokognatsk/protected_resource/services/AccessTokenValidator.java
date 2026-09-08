@@ -29,7 +29,6 @@ public final class AccessTokenValidator {
     public void validateIsNotExpired(final AccessToken accessToken) throws AccessTokenIsExpiredException {
         var expirationMoment = calcExpirationMoment(accessToken);
         if (momentAlreadyHappened(expirationMoment)) {
-            // TODO check what happens when it is expired
             throw new AccessTokenIsExpiredException();
         }
     }
