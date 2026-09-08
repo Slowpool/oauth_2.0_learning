@@ -1,7 +1,6 @@
 package com.swetlokognatsk.protected_resource.services;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.AccessTokenValue;

@@ -1,32 +1,24 @@
 package com.swetlokognatsk.client.services;
 
-import static com.swetlokognatsk.client.model.TokenStrategy.SINGLE_ACCESS_TOKEN;
 import java.io.IOException;
-import java.net.Authenticator;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.swetlokognatsk.client.Client;
 import com.swetlokognatsk.client.external_services.AuthorizationServer;
 import com.swetlokognatsk.client.external_services.ProtectedResource;
 import com.swetlokognatsk.client.model.AccessToken;
-import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.client.model.RefreshToken;
-import com.swetlokognatsk.client.model.Token;
-import com.swetlokognatsk.client.model.TokenStrategy;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 public final class AppHttpClient {

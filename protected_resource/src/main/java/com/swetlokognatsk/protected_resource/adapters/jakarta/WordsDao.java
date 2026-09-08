@@ -16,7 +16,7 @@ public class WordsDao {
     private EntityManager entityManager;
 
     public Set<String> getWords() {
-        // TODO what this w is about? why not standard `SELECT *`?
+        // TODO what this w is about? why not standard `SELECT *`? upd: that's jpql. lightweight sql for jpa entities
         var selectedWords = entityManager.createQuery("SELECT w FROM Word w", Word.class).getResultList();
         var mappedSelectedWords = selectedWords.stream().map((Word selectedWord) -> selectedWord.getWord()).toList();
         return new HashSet<>(mappedSelectedWords);

@@ -1,26 +1,18 @@
 package com.swetlokognatsk.client;
 
 import java.io.IOException;
-import java.util.Map;
-import org.springframework.context.ApplicationContext;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
-import org.thymeleaf.Thymeleaf;
 import com.swetlokognatsk.client.infrastructure.Database;
 import com.swetlokognatsk.client.model.AccessToken;
 import com.swetlokognatsk.client.model.RefreshAndAccessTokensPair;
@@ -31,7 +23,6 @@ import com.swetlokognatsk.client.services.AppHttpClient;
 import com.swetlokognatsk.client.services.Service;
 import com.swetlokognatsk.client.services.TokenParser;
 import com.swetlokognatsk.client.services.UriBuilder;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,7 +51,6 @@ public class ClientApplication {
 	private static final String ADD_WORD_URI = "/words/add";
 	private static final String REMOVE_WORD_URI = "/words/delete";
 
-	private static ApplicationContext ctx;
 	private static final String SESSION_COOKIE = "CUSTOM_SESSION";
 
 	private static final String STATE = "state";
@@ -74,7 +64,7 @@ public class ClientApplication {
 	private final MapSessionRepository sessionRepository;
 
 	public static void main(String[] args) {
-		ctx = SpringApplication.run(ClientApplication.class, args);
+		SpringApplication.run(ClientApplication.class, args);
 	}
 
 	public ClientApplication(final Service service, final MapSessionRepository sessionRepository) {

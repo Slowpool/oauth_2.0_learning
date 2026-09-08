@@ -1,6 +1,5 @@
 package com.swetlokognatsk.protected_resource.adapters;
 
-import java.util.HashSet;
 import java.util.Set;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
 import com.swetlokognatsk.oauth_db.models.AccessTokenValue;
@@ -11,7 +10,6 @@ import com.swetlokognatsk.protected_resource.ports.Database;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 
-// TODO DaoDatabase
 public final class DaoDatabase implements Database {
 
     private final AccessTokensDao AccessTokensDao;

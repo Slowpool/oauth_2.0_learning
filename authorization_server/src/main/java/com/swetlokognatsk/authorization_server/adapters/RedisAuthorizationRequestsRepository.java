@@ -3,7 +3,6 @@ package com.swetlokognatsk.authorization_server.adapters;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationRequestNotFoundException;
-import com.swetlokognatsk.authorization_server.models.AuthorizationCode;
 import com.swetlokognatsk.authorization_server.models.AuthorizationRequest;
 import com.swetlokognatsk.authorization_server.ports.AuthorizationRequestsRepository;
 import com.swetlokognatsk.authorization_server.ports.JsonSerializer;

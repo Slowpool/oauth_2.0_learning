@@ -1,6 +1,5 @@
 package com.swetlokognatsk.protected_resource;
 
-import java.util.Map;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;

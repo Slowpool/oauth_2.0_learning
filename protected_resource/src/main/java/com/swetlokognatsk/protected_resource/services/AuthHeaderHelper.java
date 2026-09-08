@@ -1,7 +1,5 @@
 package com.swetlokognatsk.protected_resource.services;
 
-import com.swetlokognatsk.protected_resource.models.AccessTokenBody;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 public final class AuthHeaderHelper {

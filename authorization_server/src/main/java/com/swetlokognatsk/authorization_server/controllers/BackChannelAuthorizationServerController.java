@@ -4,14 +4,12 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.http.ResponseEntity.*;
-import com.swetlokognatsk.authorization_server.AuthorizationServerApplication;
 import com.swetlokognatsk.authorization_server.exceptions.AuthorizationCodeNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.ClientNotFoundException;
 import com.swetlokognatsk.authorization_server.exceptions.InvalidAuthCredentialsException;
@@ -29,7 +27,6 @@ import com.swetlokognatsk.authorization_server.ports.Database;
 import com.swetlokognatsk.authorization_server.ports.RefreshTokenGenerator;
 import com.swetlokognatsk.oauth_db.RefreshTokenNotFoundException;
 import com.swetlokognatsk.oauth_db.models.AccessToken;
-import com.swetlokognatsk.oauth_db.models.RefreshAndAccessTokensPair;
 import com.swetlokognatsk.oauth_db.models.RefreshToken;
 import com.swetlokognatsk.oauth_db.models.RefreshTokenValue;
 import com.swetlokognatsk.oauth_db.models.ScopeEntity;
@@ -48,14 +45,12 @@ public class BackChannelAuthorizationServerController {
     private static final int ACCESS_TOKEN_EXPIRES_IN = 3600;
     private static final int REFRESH_TOKEN_EXPIRES_IN = 3600;
 
-    private final ApplicationContext ctx;
     private final Database database;
     private final ClientSecretHasher clientSecretHasher;
     private final AccessTokenGenerator accessTokenGenerator;
     private final RefreshTokenGenerator refreshTokenGenerator;
 
-    public BackChannelAuthorizationServerController(final ApplicationContext ctx, final Database database, final ClientSecretHasher clientSecretHasher, final AccessTokenGenerator accessTokenGenerator, final RefreshTokenGenerator refreshTokenGenerator) {
-        this.ctx = ctx;
+    public BackChannelAuthorizationServerController(final Database database, final ClientSecretHasher clientSecretHasher, final AccessTokenGenerator accessTokenGenerator, final RefreshTokenGenerator refreshTokenGenerator) {
         this.database = database;
         this.clientSecretHasher = clientSecretHasher;
         this.accessTokenGenerator = accessTokenGenerator;
