@@ -10,7 +10,6 @@ public final class Client {
     }
 
     public static String getSecret() {
-        // TODO getSecret
         return "CLIENT_SECRET_1";
     }
 

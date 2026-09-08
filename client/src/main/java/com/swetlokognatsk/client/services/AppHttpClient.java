@@ -94,9 +94,8 @@ public final class AppHttpClient {
         return encodedCredentials;
     }
 
-    // TODO remove tokenStrategy after refreshToken endpoint implementing
     // keep in mind that the tokenStrategy on prod is redundant here
-    public static String sendTokenRequest(final String code, final TokenStrategy tokenStrategy) throws IOException, InterruptedException {
+    public static String sendTokenRequest(final String code) throws IOException, InterruptedException {
         var uri = AuthorizationServer.getInternalTokenEndpoint();
 
         var headers = buildAuthHeaders();
@@ -110,17 +109,6 @@ public final class AppHttpClient {
 
         var result = sendHttpRequest(POST, uri, headers, body);
         var jsonToken = bodyUnlessError(result);
-        // var jsonToken = switch (tokenStrategy) {
-        // case SINGLE_ACCESS_TOKEN -> 
-        // case REFRESH_AND_ACCESS_PAIR -> """
-        //         {
-        //             "access_token": "accaccaccaccacc",
-        //             "token_type": "Bearer",
-        //             "refresh_token": "refrefrefrefrefref"
-        //         }
-        //             """;
-        // default -> throw new RuntimeException("unknown token strategy: %s".formatted(tokenStrategy));
-        // };
         return jsonToken;
     }
 

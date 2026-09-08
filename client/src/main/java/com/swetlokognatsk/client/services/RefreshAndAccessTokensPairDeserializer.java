@@ -28,7 +28,6 @@ class RefreshAndAccessTokensPairDeserializer extends StdDeserializer<RefreshAndA
         var accessTokenValue = ((StringNode) accessTokenRoot.get("accessToken")).asString();
         var accessTokenTypeValue = ((StringNode) accessTokenRoot.get("type")).asString();
         var accessTokenExpiresIn = ((IntNode) accessTokenRoot.get("expiresIn")).intValue();
-        // TODO parse expiresIn
         var accessToken = new AccessToken(accessTokenValue, accessTokenTypeValue, accessTokenExpiresIn);
 
         var refreshTokenRoot = jsonRoot.get("refreshToken");

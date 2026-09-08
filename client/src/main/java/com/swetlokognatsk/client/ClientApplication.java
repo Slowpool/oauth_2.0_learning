@@ -43,7 +43,6 @@ import org.springframework.ui.Model;
 import static com.swetlokognatsk.client.model.TokenStrategy.*;
 import static org.springframework.http.ResponseEntity.ok;
 
-// TODO add user authentication on auth server. with password hash? then add user_id to acces_token (or to refresh token), then add user_id to words and filter words by that user_id
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @Controller
 public class ClientApplication {
@@ -111,14 +110,12 @@ public class ClientApplication {
 	}
 
 	@GetMapping(USE_NEW_TOKEN_STRATEGY + "/{newStrategy}")
-	// TODO does it work with enum???
-	public RedirectView useStrategy(@CookieValue(SESSION_COOKIE) final String sessionId, @PathVariable final TokenStrategy newStrategy) {
+	public String useStrategy(@CookieValue(SESSION_COOKIE) final String sessionId, @PathVariable final TokenStrategy newStrategy) {
 		setTokenStrategy(sessionId, newStrategy);
 		removeAccessToken(sessionId);
 		removeRefreshToken();
 
-		// TODO is there something more suitable than redirectVIEW??? what is it at all?
-		return new RedirectView(HOME);
+		return "redirect:%s".formatted(HOME);
 	}
 
 	@GetMapping(SING_IN_VIA_GIP_HUB_PATH)
@@ -141,7 +138,7 @@ public class ClientApplication {
 
 		try {
 			var tokenStrategy = getTokenStrategy(sessionId);
-			var rawJsonToken = AppHttpClient.sendTokenRequest(code, tokenStrategy);
+			var rawJsonToken = AppHttpClient.sendTokenRequest(code);
 			Token token = TokenParser.parse(rawJsonToken, tokenStrategy);
 			switch (token) {
 			case AccessToken accessToken:

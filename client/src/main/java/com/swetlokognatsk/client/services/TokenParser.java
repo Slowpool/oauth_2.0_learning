@@ -20,7 +20,6 @@ public final class TokenParser {
     public static Token parse(final String jsonContent, final TokenStrategy tokenStrategy) {
         var clazz = switch (tokenStrategy) {
         case SINGLE_ACCESS_TOKEN -> AccessToken.class;
-        // TODO custom json deserializer reader
         case REFRESH_AND_ACCESS_PAIR -> RefreshAndAccessTokensPair.class;
         default -> throw new RuntimeException("unknown token strategy");
         };

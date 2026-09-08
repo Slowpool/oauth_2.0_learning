@@ -52,8 +52,6 @@ public class UriBuilder {
     private static String getClientRedirectURI(final boolean encode) {
         var redirectUri = Client.getRedirectURI();
         var uriBuilder = UriComponentsBuilder.fromUriString(redirectUri);
-        // TODO that's it or some query params should be added to that uri?
-
         var decodedUri = uriBuilder.toUriString();
         var uri = encode ? UriUtils.encode(decodedUri, StandardCharsets.UTF_8) : decodedUri;
         return uri;
